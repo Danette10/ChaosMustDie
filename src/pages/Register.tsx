@@ -14,6 +14,7 @@ export default function Register() {
         first_name: "",
         last_name: "",
         email: "",
+        phone_number: "",
         password: "",
         siren: "",
         name_company: "",
@@ -36,12 +37,14 @@ export default function Register() {
                     first_name: form.first_name,
                     last_name: form.last_name,
                     email: form.email,
+                    phone_number: form.phone_number,
                     password: form.password
                 }
                 : {
                     first_name: form.first_name,
                     last_name: form.last_name,
                     email: form.email,
+                    phone_number: form.phone_number,
                     password: form.password,
                     siren: form.siren,
                     name_company: form.name_company,
@@ -118,6 +121,14 @@ export default function Register() {
                             className="input input-bordered w-full mb-2"
                             name="email"
                             value={form.email}
+                            onChange={handleChange}
+                        />
+                        <input
+                            type="tel"
+                            placeholder="Numéro de téléphone"
+                            className="input input-bordered w-full mb-2"
+                            name="phone_number"
+                            value={form.phone_number}
                             onChange={handleChange}
                         />
                         <input
