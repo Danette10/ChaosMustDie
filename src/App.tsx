@@ -8,6 +8,8 @@ import Login from "./pages/Login"
 import Register from "./pages/Register"
 import Dashboard from "./pages/Dashboard"
 import ConfirmCode from "./pages/ConfirmCode"
+import ProfilePage from "./pages/ProfilePage"
+import AppLayout from "./layouts/AppLayout" // ✅
 import AuthGuard from "./components/AuthGuard"
 
 const BACKEND_URL = import.meta.env.VITE_BACKEND_URL
@@ -18,19 +20,28 @@ export default function App() {
     const [checkedCookie, setCheckedCookie] = useState(false)
 
     useEffect(() => {
-        axios.get(`${BACKEND_URL}/auth/check-confirm-cookie`, {withCredentials: true})
+        axios.get(`${BACKEND_URL}/auth/me`, {withCredentials: true})
             .then(() => {
-                if (location.pathname !== "/confirm") {
-                    navigate("/confirm")
-                }
+                // ✅ déjà connecté → ne check PAS le cookie
+                setCheckedCookie(true)
             })
             .catch(() => {
-                if (location.pathname === "/confirm") {
-                    navigate("/")
-                }
+                // ❌ pas connecté → check s’il y a un cookie de validation
+                axios.get(`${BACKEND_URL}/auth/check-confirm-cookie`, {withCredentials: true})
+                    .then(() => {
+                        if (location.pathname !== "/confirm") {
+                            navigate("/confirm")
+                        }
+                    })
+                    .catch(() => {
+                        if (location.pathname === "/confirm") {
+                            navigate("/")
+                        }
+                    })
+                    .finally(() => setCheckedCookie(true))
             })
-            .finally(() => setCheckedCookie(true))
     }, [location.pathname, navigate])
+
 
     if (!checkedCookie) return null
 
@@ -41,7 +52,12 @@ export default function App() {
                 <Route path="/login" element={<Login/>}/>
                 <Route path="/register" element={<Register/>}/>
                 <Route path="/confirm" element={<ConfirmCode/>}/>
-                <Route path="/dashboard" element={<AuthGuard><Dashboard/></AuthGuard>}/>
+
+                {/* ✅ Routes protégées AVEC layout et navbar */}
+                <Route element={<AuthGuard><AppLayout/></AuthGuard>}>
+                    <Route path="/dashboard" element={<Dashboard/>}/>
+                    <Route path="/profile" element={<ProfilePage/>}/>
+                </Route>
             </Routes>
         </AnimatePresence>
     )
