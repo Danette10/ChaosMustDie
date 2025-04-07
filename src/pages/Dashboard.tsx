@@ -6,14 +6,13 @@ const BACKEND_URL = import.meta.env.VITE_BACKEND_URL
 
 export default function Dashboard() {
     const navigate = useNavigate()
-    const {user, loading} = useUser()
+    const {user, loading, setUser} = useUser() // ✅ ajoute setUser
 
     const handleLogout = async () => {
         try {
             await axios.post(`${BACKEND_URL}/auth/logout`, {}, {withCredentials: true})
-            localStorage.setItem("logout", Date.now().toString())
+            setUser(null)
             navigate("/login", {replace: true})
-            window.location.reload()
         } catch (err) {
             console.error("Erreur lors de la déconnexion :", err)
         }
