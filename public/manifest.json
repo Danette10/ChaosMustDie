@@ -8,7 +8,7 @@
     "cookies"
   ],
   "host_permissions": [
-    "https://192.168.1.180:5000/api/v1/*"
+    "https://10.33.0.245:5000/api/v1/*"
   ],
   "icons": {
     "16": "icon.png",
