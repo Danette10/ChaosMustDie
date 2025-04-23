@@ -11,7 +11,7 @@ export default function Popup() {
     }
 
     return (
-        <div className="p-4 w-64">
+        <div className="p-4 w-full">
             <h2 className="text-xl font-bold">🚀 Bienvenue !</h2>
             <p className="text-sm text-gray-500">Connecte-toi ou inscris-toi pour continuer.</p>
 
