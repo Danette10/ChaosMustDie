@@ -33,7 +33,7 @@ export default function Login() {
 
     return (
         <PageTransition>
-            <div className="p-4 w-80">
+            <div className="p-4 w-full">
                 <Header/>
                 <h2 className="text-xl font-bold mb-4">Connexion</h2>
                 {error && <div className="alert alert-error mb-2">{error}</div>}

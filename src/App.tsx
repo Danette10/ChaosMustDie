@@ -1,46 +1,46 @@
 import {Route, Routes, useLocation, useNavigate} from "react-router-dom"
 import {AnimatePresence} from "framer-motion"
 import {useEffect, useState} from "react"
-import axios from "axios"
+import axiosInstance from "./utils/axiosInstance"
+import {useUser} from "./context/UserContext"
 
 import Popup from "./pages/Popup"
 import Login from "./pages/Login"
 import Register from "./pages/Register"
 import Dashboard from "./pages/Dashboard"
 import ConfirmCode from "./pages/ConfirmCode"
-
-const BACKEND_URL = import.meta.env.VITE_BACKEND_URL
+import ProfilePage from "./pages/ProfilePage"
+import AppLayout from "./layouts/AppLayout"
+import AuthGuard from "./components/AuthGuard"
 
 export default function App() {
     const location = useLocation()
     const navigate = useNavigate()
-    const [checkedAuth, setCheckedAuth] = useState(false)
+    const [checkedCookie, setCheckedCookie] = useState(false)
+    const {user, loading} = useUser()
 
     useEffect(() => {
-        const checkAuth = async () => {
-            try {
-                await axios.get(`${BACKEND_URL}/auth/me`, {withCredentials: true})
-                setCheckedAuth(true)
-            } catch {
-                try {
-                    await axios.get(`${BACKEND_URL}/auth/check-confirm-cookie`, {withCredentials: true})
+        if (loading) return
+
+        if (!user) {
+            axiosInstance.get("/auth/check-confirm-cookie")
+                .then(() => {
                     if (location.pathname !== "/confirm") {
                         navigate("/confirm")
                     }
-                } catch {
+                })
+                .catch(() => {
                     if (location.pathname === "/confirm") {
                         navigate("/")
                     }
-                } finally {
-                    setCheckedAuth(true)
-                }
-            }
+                })
+                .finally(() => setCheckedCookie(true))
+        } else {
+            setCheckedCookie(true)
         }
+    }, [user, loading, location.pathname, navigate])
 
-        checkAuth()
-    }, [location.pathname, navigate])
-
-    if (!checkedAuth) return null
+    if (!checkedCookie) return null
 
     return (
         <AnimatePresence mode="wait" initial={false}>
@@ -49,7 +49,11 @@ export default function App() {
                 <Route path="/login" element={<Login/>}/>
                 <Route path="/register" element={<Register/>}/>
                 <Route path="/confirm" element={<ConfirmCode/>}/>
-                <Route path="/dashboard" element={<Dashboard/>}/>
+
+                <Route element={<AuthGuard><AppLayout/></AuthGuard>}>
+                    <Route path="/dashboard" element={<Dashboard/>}/>
+                    <Route path="/profile" element={<ProfilePage/>}/>
+                </Route>
             </Routes>
         </AnimatePresence>
     )
