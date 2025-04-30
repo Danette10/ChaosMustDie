@@ -1,14 +1,16 @@
 import {useNavigate} from "react-router-dom"
 import {useUser} from "../context/UserContext"
+import {useEffect} from "react"
 
 export default function Popup() {
     const navigate = useNavigate()
     const {user} = useUser()
 
-    if (user) {
-        navigate("/dashboard")
-        return null
-    }
+    useEffect(() => {
+        if (user) {
+            navigate("/dashboard")
+        }
+    }, [user, navigate]) // 👈 dépendances
 
     return (
         <div className="p-4 w-full">
