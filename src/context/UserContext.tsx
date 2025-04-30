@@ -14,12 +14,15 @@ type UserContextType = {
     user: User | null
     loading: boolean
     refreshUser: () => Promise<void>
+    setUser: (u: User | null) => void
 }
 
 const UserContext = createContext<UserContextType>({
     user: null,
     loading: true,
     refreshUser: async () => {
+    },
+    setUser: () => {
     }
 })
 
@@ -46,10 +49,17 @@ export function UserProvider({children}: { children: React.ReactNode }) {
 
     useEffect(() => {
         fetchUser()
+
+        const onFocus = () => {
+            fetchUser()
+        }
+
+        window.addEventListener("focus", onFocus)
+        return () => window.removeEventListener("focus", onFocus)
     }, [])
 
     return (
-        <UserContext.Provider value={{user, loading, refreshUser: fetchUser}}>
+        <UserContext.Provider value={{user, loading, refreshUser: fetchUser, setUser}}>
             {children}
         </UserContext.Provider>
     )
