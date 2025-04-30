@@ -1,7 +1,5 @@
-import {createContext, useContext, useEffect, useState} from "react"
-import axios from "axios"
-
-const BACKEND_URL = import.meta.env.VITE_BACKEND_URL
+import {createContext, useContext, useEffect, useRef, useState} from "react"
+import axiosInstance from "../utils/axiosInstance"
 
 type User = {
     id: number
@@ -30,10 +28,14 @@ export const useUser = () => useContext(UserContext)
 export function UserProvider({children}: { children: React.ReactNode }) {
     const [user, setUser] = useState<User | null>(null)
     const [loading, setLoading] = useState(true)
+    const hasFetched = useRef(false) // ✅ évite les appels multiples
 
     const fetchUser = async () => {
+        if (hasFetched.current) return
+        hasFetched.current = true
+
         try {
-            const res = await axios.get(`${BACKEND_URL}/auth/me`, {withCredentials: true})
+            const res = await axiosInstance.get("/auth/me")
             setUser(res.data)
         } catch {
             setUser(null)

@@ -1,8 +1,6 @@
-import {useEffect, useState} from "react"
+import {useEffect, useRef, useState} from "react"
 import {useUser} from "../context/UserContext"
-import axios from "axios"
-
-const BACKEND_URL = import.meta.env.VITE_BACKEND_URL
+import axiosInstance from "../utils/axiosInstance"
 
 const auditLabels: Record<string, string> = {
     ddos: "Détection DDoS",
@@ -20,17 +18,44 @@ export default function ProfilePage() {
     const [selectedAudits, setSelectedAudits] = useState<string[]>([])
     const [loadingAudits, setLoadingAudits] = useState(true)
 
+    const handleToggleAudit = (audit: string) => {
+        setSelectedAudits(prev =>
+            prev.includes(audit)
+                ? prev.filter(a => a !== audit)
+                : [...prev, audit]
+        )
+    }
+
+    const hasFetched = useRef(false)
+
     useEffect(() => {
-        axios.get(`${BACKEND_URL}/api/audits`, {withCredentials: true})
+        if (!user || hasFetched.current) return
+        hasFetched.current = true
+
+        axiosInstance.get("/profile/audits")
             .then(res => {
                 setAvailableAudits(res.data.all)
                 setSelectedAudits(res.data.selected)
             })
             .finally(() => setLoadingAudits(false))
-    }, [])
+    }, [user])
+
+
+    const handleSaveAudits = async () => {
+        try {
+            await axiosInstance.post("/profile/audits", {
+                selected: selectedAudits
+            })
+            alert("Préférences enregistrées ✅")
+        } catch (err) {
+            console.error(err)
+            alert("Erreur lors de la sauvegarde ❌")
+        }
+    }
 
     if (!user) return <p>Chargement...</p>
 
+    console.log(selectedAudits)
     return (
         <div className="max-w-xl mx-auto p-6">
             <h2 className="text-2xl font-bold mb-4">👤 Mon profil</h2>
@@ -43,17 +68,31 @@ export default function ProfilePage() {
             </div>
 
             <h3 className="text-xl font-semibold mb-2">🔒 Préférences d’audit</h3>
+
             {loadingAudits ? (
                 <p>Chargement des audits...</p>
             ) : (
-                <ul className="list-disc list-inside space-y-1">
-                    {availableAudits.map(audit => (
-                        <li key={audit}>
-                            {auditLabels[audit] || audit}
-                            {selectedAudits.includes(audit) ? " ✅" : " ❌"}
-                        </li>
-                    ))}
-                </ul>
+                <>
+                    <ul className="list-none space-y-2">
+                        {availableAudits.map(audit => (
+                            <li key={audit} className="flex items-center gap-2">
+                                <input
+                                    type="checkbox"
+                                    checked={selectedAudits.includes(audit)}
+                                    onChange={() => handleToggleAudit(audit)}
+                                    className="checkbox checkbox-sm"
+                                />
+                                <span>{auditLabels[audit] || audit}</span>
+                            </li>
+                        ))}
+                    </ul>
+                    <button
+                        className="btn btn-primary mt-4"
+                        onClick={handleSaveAudits}
+                    >
+                        💾 Sauvegarder mes préférences
+                    </button>
+                </>
             )}
         </div>
     )

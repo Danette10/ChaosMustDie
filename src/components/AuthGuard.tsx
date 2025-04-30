@@ -1,6 +1,6 @@
 import {useUser} from "../context/UserContext"
 import {Navigate, useLocation} from "react-router-dom"
-import {JSX} from "react";
+import {JSX} from "react"
 
 export default function AuthGuard({children}: { children: JSX.Element }) {
     const {user, loading} = useUser()
@@ -11,7 +11,11 @@ export default function AuthGuard({children}: { children: JSX.Element }) {
     }
 
     if (!user) return <Navigate to="/" replace/>
-    if (user && location.pathname !== "/dashboard") return <Navigate to="/dashboard" replace/>
+
+    const authPages = ["/", "/login", "/register"]
+    if (user && authPages.includes(location.pathname)) {
+        return <Navigate to="/dashboard" replace/>
+    }
 
     return children
 }

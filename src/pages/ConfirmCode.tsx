@@ -1,10 +1,8 @@
 import {useState} from "react"
-import {useNavigate} from "react-router-dom"
-import axios from "axios"
+import axiosInstance from "../utils/axiosInstance"
 import PageTransition from "../components/PageTransition"
 import Header from "../components/Header"
-
-const BACKEND_URL = import.meta.env.VITE_BACKEND_URL
+import {useNavigate} from "react-router-dom"
 
 export default function ConfirmCode() {
     const [code, setCode] = useState("")
@@ -14,14 +12,9 @@ export default function ConfirmCode() {
 
     const handleConfirm = async () => {
         try {
-            await axios.post(
-                `${BACKEND_URL}/auth/confirm-code`,
-                {code},
-                {withCredentials: true}
-            )
+            await axiosInstance.post("/auth/confirm-code", {code})
             setSuccess("Compte confirmé avec succès ✅")
             setError("")
-            // ⏳ petite pause pour afficher le succès avant de rediriger
             setTimeout(() => navigate("/login"), 1500)
         } catch {
             setError("Code invalide ou expiré ❌")
