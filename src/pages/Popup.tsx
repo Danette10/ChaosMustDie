@@ -10,7 +10,7 @@ export default function Popup() {
         if (user) {
             navigate("/dashboard")
         }
-    }, [user, navigate]) // 👈 dépendances
+    }, [user, navigate])
 
     return (
         <div className="p-4 w-full">

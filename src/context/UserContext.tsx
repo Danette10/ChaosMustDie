@@ -14,12 +14,16 @@ type UserContextType = {
     user: User | null
     loading: boolean
     refreshUser: () => Promise<void>
+    forceRefreshUser: () => Promise<void>
     setUser: (u: User | null) => void
 }
 
 const UserContext = createContext<UserContextType>({
     user: null,
     loading: true,
+    forceRefreshUser(): Promise<void> {
+        return Promise.resolve(undefined);
+    },
     refreshUser: async () => {
     },
     setUser: () => {
@@ -58,8 +62,19 @@ export function UserProvider({children}: { children: React.ReactNode }) {
         return () => window.removeEventListener("focus", onFocus)
     }, [])
 
+    const forceRefreshUser = async () => {
+        try {
+            const res = await axiosInstance.get("/auth/me")
+            setUser(res.data)
+        } catch {
+            setUser(null)
+        } finally {
+            setLoading(false)
+        }
+    }
+
     return (
-        <UserContext.Provider value={{user, loading, refreshUser: fetchUser, setUser}}>
+        <UserContext.Provider value={{user, loading, refreshUser: fetchUser, forceRefreshUser, setUser}}>
             {children}
         </UserContext.Provider>
     )

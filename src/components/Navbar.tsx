@@ -3,19 +3,21 @@ import {useUser} from "../context/UserContext"
 import axiosInstance from "../utils/axiosInstance"
 
 export default function Navbar() {
-    const {user, loading} = useUser()
+    const {user, loading, setUser} = useUser()
     const navigate = useNavigate()
 
     const handleLogout = async () => {
         try {
             await axiosInstance.post("/auth/logout")
-            localStorage.setItem("logout", Date.now().toString())
+            localStorage.removeItem("access_token")
+
+            setUser(null)
             navigate("/login", {replace: true})
-            window.location.reload()
         } catch (err) {
             console.error("Erreur lors de la déconnexion :", err)
         }
     }
+
 
     if (loading || !user) return null
 

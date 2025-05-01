@@ -22,22 +22,23 @@ export default function App() {
     useEffect(() => {
         if (loading) return
 
-        if (!user) {
-            axiosInstance.get("/auth/check-confirm-cookie")
-                .then(() => {
-                    if (location.pathname !== "/confirm") {
-                        navigate("/confirm")
-                    }
-                })
-                .catch(() => {
-                    if (location.pathname === "/confirm") {
-                        navigate("/")
-                    }
-                })
-                .finally(() => setCheckedCookie(true))
-        } else {
+        if (user) {
             setCheckedCookie(true)
+            return
         }
+
+        axiosInstance.get("/auth/check-confirm-cookie")
+            .then(() => {
+                if (location.pathname !== "/confirm") {
+                    navigate("/confirm")
+                }
+            })
+            .catch(() => {
+                if (location.pathname === "/confirm") {
+                    navigate("/")
+                }
+            })
+            .finally(() => setCheckedCookie(true))
     }, [user, loading, location.pathname, navigate])
 
     if (!checkedCookie) return null

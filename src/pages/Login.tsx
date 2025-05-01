@@ -1,35 +1,37 @@
 import {useState} from "react"
-import axios from "axios"
 import Header from "../components/Header.tsx";
 import PageTransition from "../components/PageTransition.tsx";
 import {useNavigate} from "react-router-dom";
 import {useUser} from "../context/UserContext"
-
-const BACKEND_URL = import.meta.env.VITE_BACKEND_URL;
+import axiosInstance from "../utils/axiosInstance.ts";
 
 export default function Login() {
     const [email, setEmail] = useState("")
     const [password, setPassword] = useState("")
     const [error, setError] = useState("")
     const navigate = useNavigate()
-    const {refreshUser} = useUser()
+    const {forceRefreshUser} = useUser()
 
     const handleLogin = async () => {
         try {
-            await axios.post(`${BACKEND_URL}/auth/login`, {
+            const res = await axiosInstance.post("/auth/login", {
                 email,
                 password
-            }, {
-                withCredentials: true
             })
 
-            await refreshUser()
+            if (window.location.protocol === "chrome-extension:" && res.data?.token) {
+                localStorage.setItem("access_token", res.data.token)
+            }
 
+            await new Promise(resolve => setTimeout(resolve, 100))
+
+            await forceRefreshUser()
             navigate("/dashboard")
         } catch (err) {
             setError("Email ou mot de passe incorrect")
         }
     }
+
 
     return (
         <PageTransition>
