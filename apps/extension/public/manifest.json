@@ -1,0 +1,22 @@
+{
+  "manifest_version": 3,
+  "name": "Chaos Must Die",
+  "version": "1.0",
+  "description": "Extension d'audit de sécurité informatique",
+  "permissions": [
+    "storage",
+    "cookies"
+  ],
+  "host_permissions": [
+    "https://192.168.1.180:5000/api/v1/*"
+  ],
+  "icons": {
+    "16": "icon.png",
+    "48": "icon.png",
+    "128": "icon.png"
+  },
+  "action": {
+    "default_icon": "icon.png",
+    "default_popup": "index.html"
+  }
+}
