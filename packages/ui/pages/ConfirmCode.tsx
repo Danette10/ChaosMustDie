@@ -43,6 +43,32 @@ export const ConfirmCode = () => {
                     value={code}
                     onChange={(e) => setCode(e.target.value)}
                 />
+
+                <p className="text-sm text-center mb-4">
+                    Vous n'avez pas reçu le code ou il a expiré ?{" "}
+                    <button
+                        className="link link-primary"
+                        onClick={async () => {
+                            const email = localStorage.getItem("pending_confirmation_email")
+                            if (!email) {
+                                setError("Impossible de renvoyer le code : email introuvable ❌")
+                                return
+                            }
+
+                            try {
+                                await axiosInstance.post("/auth/resend-code", {email})
+                                setSuccess("Code renvoyé par email ✅")
+                                setError("")
+                            } catch {
+                                setError("Erreur lors de l'envoi du code ❌")
+                                setSuccess("")
+                            }
+                        }}
+                    >
+                        Renvoyer le code
+                    </button>
+                </p>
+
                 <button className="btn btn-primary w-full" onClick={handleConfirm}>
                     Valider le code
                 </button>
