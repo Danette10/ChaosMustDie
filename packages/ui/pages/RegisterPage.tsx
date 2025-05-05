@@ -1,7 +1,7 @@
-import { useState } from "react"
-import { useNavigate } from "react-router-dom"
-import { motion, AnimatePresence } from "framer-motion"
-import { BackButton } from "../components/BackButton"
+import {useState} from "react"
+import {useNavigate} from "react-router-dom"
+import {AnimatePresence, motion} from "framer-motion"
+import {BackButton} from "../components/BackButton"
 import axiosInstance from "../utils/axiosInstance"
 
 export const RegisterPage = () => {
@@ -54,6 +54,7 @@ export const RegisterPage = () => {
             await axiosInstance.post(endpoint, payload)
             setSuccess("Inscription réussie ✅")
             setError("")
+            localStorage.setItem("pending_confirmation_email", form.email)
             setTimeout(() => navigate("/confirm-code"), 500)
         } catch {
             setError("Erreur pendant l'inscription")

@@ -1,8 +1,8 @@
-import { useState } from "react"
-import { useNavigate } from "react-router-dom"
+import {useState} from "react"
+import {useNavigate} from "react-router-dom"
 import axiosInstance from "../utils/axiosInstance"
-import { BackButton } from "../components/BackButton"
-import { motion } from "framer-motion"
+import {BackButton} from "../components/BackButton"
+import {motion} from "framer-motion"
 
 export const ConfirmCode = () => {
     const [code, setCode] = useState("")
@@ -15,6 +15,7 @@ export const ConfirmCode = () => {
             await axiosInstance.post("/auth/confirm-code", { code })
             setSuccess("Compte confirmé avec succès ✅")
             setError("")
+            localStorage.removeItem("pending_confirmation_email")
             setTimeout(() => navigate("/login"), 1500)
         } catch {
             setError("Code invalide ou expiré ❌")
