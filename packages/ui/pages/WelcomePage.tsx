@@ -15,7 +15,7 @@ export const WelcomePage = () => {
     return (
         <PageTransition>
             <div
-                className="min-h-[calc(100vh-4rem)] flex flex-col justify-center items-center gap-4 text-center bg-base-200 p-4">
+                className="min-h-[calc(100vh-0rem)] flex flex-col justify-center items-center gap-4 text-center bg-base-200 p-4">
                 <h1 className="text-2xl font-bold">Bienvenue 👋</h1>
                 <p className="text-gray-500">Veuillez vous connecter ou créer un compte.</p>
 
