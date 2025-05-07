@@ -1,20 +1,15 @@
-import { BrowserRouter, Routes, Route } from "react-router-dom"
-import { UserProvider } from "@/context/UserContext"
-import { WelcomePage } from "@/pages/WelcomePage"
-import { LoginPage } from "@/pages/LoginPage"
+import {UserProvider} from "@/context/UserContext"
+import {BrowserRouter} from "react-router-dom"
+import AnimatedRoutes from "@/components/AnimatedRoutes"
 
 function App() {
-  return (
-    <UserProvider>
-      <BrowserRouter>
-        <Routes>
-          <Route path="/" element={<WelcomePage />} />
-          <Route path="/login" element={<LoginPage />} />
-        </Routes>
-      </BrowserRouter>
-    </UserProvider>
-  )
+    return (
+        <UserProvider>
+            <BrowserRouter>
+                <AnimatedRoutes/>
+            </BrowserRouter>
+        </UserProvider>
+    )
 }
 
 export default App
-

@@ -1,5 +1,5 @@
-import { useNavigate } from "react-router-dom"
-import { useUser } from "../context/UserContext"
+import {useNavigate} from "react-router-dom"
+import {useUser} from "../context/UserContext"
 import axiosInstance from "../utils/axiosInstance";
 
 export const Navbar = () => {

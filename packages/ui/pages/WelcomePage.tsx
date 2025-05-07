@@ -1,4 +1,4 @@
-import { useNavigate } from "react-router-dom"
+import {useNavigate} from "react-router-dom"
 import PageTransition from "../components/PageTransition"
 import {useEffect} from "react";
 import {useUser} from "../context/UserContext";
@@ -14,7 +14,8 @@ export const WelcomePage = () => {
     }, [user, loading, navigate])
     return (
         <PageTransition>
-            <div className="flex-1 flex flex-col justify-center items-center gap-4 text-center bg-base-200 p-4 h-full">
+            <div
+                className="min-h-[calc(100vh-4rem)] flex flex-col justify-center items-center gap-4 text-center bg-base-200 p-4">
                 <h1 className="text-2xl font-bold">Bienvenue 👋</h1>
                 <p className="text-gray-500">Veuillez vous connecter ou créer un compte.</p>
 
@@ -27,5 +28,6 @@ export const WelcomePage = () => {
                 </button>
             </div>
         </PageTransition>
+
     )
 }

@@ -1,6 +1,6 @@
-import { useUser } from "../context/UserContext"
-import { useEffect } from "react"
-import { useNavigate } from "react-router-dom"
+import {useUser} from "../context/UserContext"
+import {useEffect} from "react"
+import {useNavigate} from "react-router-dom"
 
 export const AuthGuard = ({ children }: { children: React.ReactNode }) => {
   const { user, loading } = useUser()
