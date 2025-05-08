@@ -1,4 +1,4 @@
-import { useParams, useNavigate } from "react-router-dom";
+import { useParams } from "react-router-dom";
 import { useEffect, useRef, useState } from "react";
 import {
     Box,
@@ -13,19 +13,23 @@ import {
 } from "@mantine/core";
 import PageTransition from "../components/PageTransition";
 import axiosInstance from "../utils/axiosInstance";
+import {BackButton} from "../components/BackButton";
 
 export default function ChatConversationPage() {
     const { conversationId } = useParams();
-    const navigate = useNavigate();
     const [messages, setMessages] = useState([]);
     const [input, setInput] = useState("");
     const [contextMenu, setContextMenu] = useState<{ x: number; y: number; id: number | null }>({ x: 0, y: 0, id: null });
     const scrollAreaRef = useRef<HTMLDivElement>(null);
+    const [partner, setPartner] = useState<{ firstname: string; lastname: string } | null>(null);
 
     useEffect(() => {
         if (!conversationId) return;
         axiosInstance.get(`/chat/messages/${conversationId}`)
-            .then((res) => setMessages(res.data))
+            .then((res) => {
+                setMessages(res.data.messages);
+                setPartner(res.data.partner);
+            })
             .catch(console.error);
     }, [conversationId]);
 
@@ -52,10 +56,10 @@ export default function ChatConversationPage() {
         <PageTransition>
             <Box p="md">
                 <Group position="apart" mb="md">
-                    <Title order={3}>Conversation</Title>
-                    <Button variant="light" size="xs" onClick={() => navigate("/chat")}>
-                        Retour
-                    </Button>
+                    <BackButton />
+                    <Title order={3}>
+                        {partner ? `${partner.firstname} ${partner.lastname}` : "Conversation"}
+                    </Title>
                 </Group>
 
                 <Paper shadow="xs" p="sm" withBorder style={{ height: 400, display: "flex", flexDirection: "column" }}>
