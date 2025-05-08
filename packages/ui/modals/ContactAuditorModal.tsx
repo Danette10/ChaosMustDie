@@ -3,11 +3,11 @@ import {
     Modal,
     Button,
     Textarea,
-    TextInput,
     Group,
     Stack,
     Alert,
 } from "@mantine/core";
+import { useNavigate } from "react-router-dom";
 import axiosInstance from "../utils/axiosInstance";
 
 interface ContactAuditorModalProps {
@@ -23,26 +23,27 @@ export const ContactAuditorModal = ({
                                         auditorId,
                                         auditorName,
                                     }: ContactAuditorModalProps) => {
-    const [subject, setSubject] = useState("");
     const [message, setMessage] = useState("");
-    const [success, setSuccess] = useState("");
     const [error, setError] = useState("");
+    const navigate = useNavigate();
 
     const handleSend = async () => {
         try {
-            await axiosInstance.post("/audit/contact-auditor", {
-                auditorId,
-                subject,
+            const res = await axiosInstance.post("/chat/start", {
+                auditor_id: auditorId,
                 message,
             });
-            setSuccess("Message envoyé avec succès ✅");
-            setError("");
-            setSubject("");
-            setMessage("");
-            setTimeout(onClose, 1500);
+
+            const conversationId = res.data?.conversation_id;
+            if (conversationId) {
+                onClose();
+                navigate(`/chat/${conversationId}`);
+            } else {
+                throw new Error("Conversation ID manquant");
+            }
         } catch (err) {
-            setError("Erreur lors de l'envoi du message ❌");
-            setSuccess("");
+            console.error(err);
+            setError("Erreur lors de la création de la conversation ❌");
         }
     };
 
@@ -60,13 +61,6 @@ export const ContactAuditorModal = ({
             }}
         >
             <Stack>
-                <TextInput
-                    label="Objet"
-                    placeholder="Ex : Demande de démarrage d’audit"
-                    value={subject}
-                    onChange={(e) => setSubject(e.currentTarget.value)}
-                    required
-                />
                 <Textarea
                     label="Message"
                     placeholder="Bonjour, nous aimerions collaborer avec vous pour un audit..."
@@ -76,7 +70,6 @@ export const ContactAuditorModal = ({
                     required
                 />
                 {error && <Alert color="red">{error}</Alert>}
-                {success && <Alert color="green">{success}</Alert>}
                 <Group justify="end">
                     <Button onClick={handleSend}>Envoyer</Button>
                 </Group>

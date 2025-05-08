@@ -31,14 +31,15 @@ export default function LoginPage() {
     try {
       const res = await axiosInstance.post("/auth/login", { email, password });
 
-      const { user, access_token, refresh_token } = res.data;
+      const { user, access_token } = res.data;
 
-      if (!access_token || !refresh_token || !user) {
+      if (!access_token || !user) {
         throw new Error("Réponse invalide du serveur");
       }
 
-      localStorage.setItem("access_token", access_token);
-      localStorage.setItem("refresh_token", refresh_token);
+      localStorage.setItem("access_token", access_token.replace("Bearer ", ""));
+
+
       setUser(user);
       navigate("/");
     } catch (err: any) {

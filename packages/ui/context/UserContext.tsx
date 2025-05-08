@@ -1,12 +1,13 @@
 import React, { createContext, useContext, useEffect, useRef, useState } from "react";
 import axiosInstance from "../utils/axiosInstance";
+import {UserTypeEnum} from "../enum/UserType";
 
 type User = {
   id: number;
   first_name: string;
   last_name: string;
   email: string;
-  user_type: string;
+  user_type: UserTypeEnum;
   phone_number?: string;
 };
 

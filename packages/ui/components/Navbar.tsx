@@ -15,7 +15,6 @@ export const Navbar = () => {
             console.error("Erreur lors de la déconnexion :", err);
         } finally {
             localStorage.removeItem("access_token");
-            localStorage.removeItem("refresh_token");
             setUser(null);
             navigate("/login", { replace: true });
         }
@@ -39,6 +38,14 @@ export const Navbar = () => {
                         onClick={() => navigate("/profile")}
                     >
                         Profil
+                    </Button>
+
+                    <Button
+                        size="xs"
+                        variant={location.pathname.startsWith("/chat") ? "filled" : "subtle"}
+                        onClick={() => navigate("/chat")}
+                    >
+                        Chat
                     </Button>
 
                     <Button size="xs" color="red" variant="light" onClick={handleLogout}>

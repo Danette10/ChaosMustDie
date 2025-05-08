@@ -14,6 +14,7 @@ import {
 } from "@mantine/core";
 import { IconCheck, IconX } from "@tabler/icons-react";
 import { Loader } from "../components/Loader";
+import {UserTypeEnum, UserTypeLabel} from "../enum/UserType";
 
 export default function ProfilePage() {
     const { user } = useUser();
@@ -87,22 +88,31 @@ export default function ProfilePage() {
                         {success}
                     </Alert>
                 )}
+                <Box>
+                    <Title order={3} mb="xs" align="center">Informations utilisateur</Title>
+                    <Text mb="xs"><strong>Nom :</strong> {user?.last_name}</Text>
+                    <Text mb="xs"><strong>Prénom :</strong> {user?.first_name}</Text>
+                    <Text mb="xs"><strong>Email :</strong> {user?.email}</Text>
+                    <Text mb="xs"><strong>Type d'utilisateur :</strong> {user && UserTypeLabel[user.user_type]}</Text>
+                </Box>
 
-                <Title order={4} mt="md" mb="xs">Types d'audit souhaités</Title>
-                <Stack spacing="xs">
-                    {allAudits.map((type) => (
-                        <Checkbox
-                            key={type}
-                            label={type}
-                            checked={selectedAudits.includes(type)}
-                            onChange={() => handleToggle(type)}
-                        />
-                    ))}
-                </Stack>
+                <Box>
+                    <Title order={3} mt="md" mb="xs" align="center">Types d'audit souhaités</Title>
+                    <Stack spacing="xs">
+                        {allAudits.map((type) => (
+                            <Checkbox
+                                key={type}
+                                label={type}
+                                checked={selectedAudits.includes(type)}
+                                onChange={() => handleToggle(type)}
+                            />
+                        ))}
+                    </Stack>
 
-                <Button fullWidth mt="lg" onClick={handleSave}>
-                    Enregistrer
-                </Button>
+                    <Button fullWidth mt="lg" onClick={handleSave}>
+                        Enregistrer
+                    </Button>
+                </Box>
             </Paper>
         </Container>
     );

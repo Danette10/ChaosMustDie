@@ -5,7 +5,7 @@ import PageTransition from "./PageTransition";
 import { AuthGuard } from "./AuthGuard";
 import Layout from "./Layout";
 import { Loader } from "./Loader";
-import { useEnforceConfirmationRedirect } from "../hooks/useEnforceConfirmationRedirect"; // ✅ IMPORT
+import { useEnforceConfirmationRedirect } from "../hooks/useEnforceConfirmationRedirect";
 
 const WelcomePage = lazy(() => import("../pages/WelcomePage"));
 const LoginPage = lazy(() => import("../pages/LoginPage"));
@@ -13,6 +13,7 @@ const RegisterPage = lazy(() => import("../pages/RegisterPage"));
 const ConfirmCode = lazy(() => import("../pages/ConfirmCode"));
 const DashboardPage = lazy(() => import("../pages/DashboardPage"));
 const ProfilePage = lazy(() => import("../pages/ProfilePage"));
+const ChatPage = lazy(() => import("../pages/ChatPage"));
 
 export default function AnimatedRoutes() {
     const location = useLocation();
@@ -37,6 +38,7 @@ export default function AnimatedRoutes() {
                     >
                         <Route path="/dashboard" element={<PageTransition><DashboardPage /></PageTransition>} />
                         <Route path="/profile" element={<PageTransition><ProfilePage /></PageTransition>} />
+                        <Route path="/chat/*" element={<PageTransition><ChatPage /></PageTransition>} />
                     </Route>
                 </Routes>
             </Suspense>
