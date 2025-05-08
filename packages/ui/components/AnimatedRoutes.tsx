@@ -14,10 +14,11 @@ const ConfirmCode = lazy(() => import("../pages/ConfirmCode"));
 const DashboardPage = lazy(() => import("../pages/DashboardPage"));
 const ProfilePage = lazy(() => import("../pages/ProfilePage"));
 const ChatPage = lazy(() => import("../pages/ChatPage"));
+const AllAuditorsPage = lazy(() => import("../pages/AllAuditorsPage"));
 
 export default function AnimatedRoutes() {
     const location = useLocation();
-    const ready = useEnforceConfirmationRedirect(); // ✅ UTILISATION DU HOOK
+    const ready = useEnforceConfirmationRedirect();
 
     if (!ready) return <Loader />;
 
@@ -39,6 +40,7 @@ export default function AnimatedRoutes() {
                         <Route path="/dashboard" element={<PageTransition><DashboardPage /></PageTransition>} />
                         <Route path="/profile" element={<PageTransition><ProfilePage /></PageTransition>} />
                         <Route path="/chat/*" element={<PageTransition><ChatPage /></PageTransition>} />
+                        <Route path="/auditors" element={<PageTransition><AllAuditorsPage /></PageTransition>} />
                     </Route>
                 </Routes>
             </Suspense>

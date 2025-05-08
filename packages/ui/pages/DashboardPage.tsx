@@ -1,5 +1,6 @@
 import { useUser } from "../context/UserContext";
 import { useEffect, useState } from "react";
+import { useNavigate } from "react-router-dom";
 import axiosInstance from "../utils/axiosInstance";
 import { Loader } from "../components/Loader";
 import {
@@ -15,7 +16,8 @@ import {
     Text,
     Title
 } from "@mantine/core";
-import { ContactAuditorModal } from "../modals/ContactAuditorModal"; // ← Import du modal
+import { ContactAuditorModal } from "../modals/ContactAuditorModal";
+import {AuditorCard} from "../components/AuditorCard"; // ← Import du modal
 
 export default function DashboardPage() {
     const { user } = useUser();
@@ -23,7 +25,7 @@ export default function DashboardPage() {
     const [auditTypes, setAuditTypes] = useState<string[]>([]);
     const [selectedTypes, setSelectedTypes] = useState<string[]>([]);
     const [loading, setLoading] = useState(true);
-
+    const navigate = useNavigate();
     const [modalOpen, setModalOpen] = useState(false);
     const [selectedAuditor, setSelectedAuditor] = useState<any>(null);
 
@@ -99,29 +101,13 @@ export default function DashboardPage() {
                         <Box>
                             <Group position="apart" mb="md">
                                 <Title order={3}>Auditeurs disponibles</Title>
-                                <Button variant="filled">Voir tous les auditeurs</Button>
+                                <Button variant="filled" onClick={() => navigate("/auditors")}>Voir tous les auditeurs</Button>
                             </Group>
 
                             <SimpleGrid cols={1} breakpoints={[{ minWidth: 768, cols: 2 }]} spacing="md">
                                 {filteredAuditors.slice(0, 5).map((auditor) => (
-                                    <Paper key={auditor.id} shadow="xs" p="md" withBorder>
-                                        <Group position="apart" mb="xs">
-                                            <Text fw={600}>{auditor.name}</Text>
-                                            <Button size="xs" onClick={() => openContactModal(auditor)}>Contacter</Button>
-                                        </Group>
-                                        <Text size="sm" c="dimmed">{auditor.email}</Text>
-                                        <Group spacing="xs" mt="xs" wrap="wrap">
-                                            {auditor.audit_types.map((type: string) => (
-                                                <Badge key={type} color={getBadgeColor(type)} variant="outline">
-                                                    {type}
-                                                </Badge>
-                                            ))}
-                                        </Group>
-                                    </Paper>
+                                    <AuditorCard key={auditor.id} auditor={auditor} onContact={openContactModal} />
                                 ))}
-                                {filteredAuditors.length === 0 && (
-                                    <Text color="dimmed">Aucun auditeur ne correspond à ces filtres.</Text>
-                                )}
                             </SimpleGrid>
                         </Box>
 
