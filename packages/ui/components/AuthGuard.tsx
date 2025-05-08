@@ -1,19 +1,21 @@
-import {useUser} from "../context/UserContext"
-import {useEffect} from "react"
-import {useNavigate} from "react-router-dom"
+import { useUser } from "../context/UserContext";
+import { useEffect } from "react";
+import { useNavigate } from "react-router-dom";
+import { Center, Loader, Text } from "@mantine/core";
 
 export const AuthGuard = ({ children }: { children: React.ReactNode }) => {
-  const { user, loading } = useUser()
-  const navigate = useNavigate()
+  const { user, loading } = useUser();
+  const navigate = useNavigate();
 
   useEffect(() => {
     if (!loading && !user) {
-      navigate("/")
+      navigate("/");
     }
-  }, [loading, user, navigate])
+  }, [loading, user, navigate]);
 
-  if (loading) return <div className="text-center p-10">Chargement...</div>
-  if (!user) return null
+  if (loading) return <Loader />;
 
-  return <>{children}</>
-}
+  if (!user) return null;
+
+  return <>{children}</>;
+};

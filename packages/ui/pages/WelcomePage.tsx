@@ -1,33 +1,38 @@
-import {useNavigate} from "react-router-dom"
-import PageTransition from "../components/PageTransition"
-import {useEffect} from "react";
-import {useUser} from "../context/UserContext";
+import { useEffect } from "react";
+import { useNavigate } from "react-router-dom";
+import { Button, Center, Stack, Text, Title, Box } from "@mantine/core";
+import PageTransition from "../components/PageTransition";
+import { useUser } from "../context/UserContext";
 
-export const WelcomePage = () => {
-    const { user, loading } = useUser()
-    const navigate = useNavigate()
+export default function  WelcomePage () {
+    const { user, loading } = useUser();
+    const navigate = useNavigate();
 
     useEffect(() => {
         if (!loading && user) {
-            navigate("/dashboard")
+            navigate("/dashboard");
         }
-    }, [user, loading, navigate])
+    }, [user, loading, navigate]);
+
     return (
         <PageTransition>
-            <div
-                className="min-h-[calc(100vh-0rem)] flex flex-col justify-center items-center gap-4 text-center bg-base-200 p-4">
-                <h1 className="text-2xl font-bold">Bienvenue 👋</h1>
-                <p className="text-gray-500">Veuillez vous connecter ou créer un compte.</p>
+            <Box h="100vh" bg="gray.0" px="md">
+                <Center h="100%">
+                    <Stack align="center" spacing="md">
+                        <Title order={2}>Bienvenue</Title>
+                        <Text color="dimmed">Veuillez vous connecter ou créer un compte.</Text>
 
-                <button className="btn btn-primary w-48" onClick={() => navigate("/login")}>
-                    Se connecter
-                </button>
+                        <Button fullWidth onClick={() => navigate("/login")}>
+                            Se connecter
+                        </Button>
 
-                <button className="btn btn-outline w-48" onClick={() => navigate("/register")}>
-                    S’inscrire
-                </button>
-            </div>
+                        <Button variant="outline" fullWidth onClick={() => navigate("/register")}>
+                            S’inscrire
+                        </Button>
+
+                    </Stack>
+                </Center>
+            </Box>
         </PageTransition>
-
-    )
-}
+    );
+};
