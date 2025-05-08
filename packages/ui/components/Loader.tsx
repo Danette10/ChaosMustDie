@@ -1,7 +1,9 @@
+import { Center, Loader as MantineLoader } from "@mantine/core";
+
 export const Loader = () => {
     return (
-        <div className="flex items-center justify-center h-full w-full py-10">
-            <span className="loading loading-spinner loading-lg text-primary"></span>
-        </div>
-    )
-}
+        <Center style={{ position: 'absolute', top: '50%', right: '40%' }}>
+            <MantineLoader size="xl" variant="dots" />
+        </Center>
+    );
+};

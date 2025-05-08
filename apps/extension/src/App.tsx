@@ -1,15 +1,17 @@
 import {HashRouter} from "react-router-dom"
 import {UserProvider} from "@/context/UserContext"
-import AnimatedRoutes from "@/components/AnimatedRoutes.tsx"
+import AnimatedRoutes from "@/components/AnimatedRoutes"
+import { Box } from "@mantine/core";
 
 const App = () => (
-    <div data-theme="cupcake" className="w-[550px] h-[600px] overflow-y-auto overflow-x-hidden">
+    <Box w={550} style={{ overflowY: "auto", overflowX: "hidden" }}>
         <UserProvider>
             <HashRouter>
                 <AnimatedRoutes />
             </HashRouter>
         </UserProvider>
-    </div>
-)
+    </Box>
+);
 
-export default App
+export default App;
+

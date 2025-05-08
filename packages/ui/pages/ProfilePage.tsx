@@ -1,93 +1,109 @@
-import {useUser} from "../context/UserContext"
-import {useEffect, useState} from "react"
-import axiosInstance from "../utils/axiosInstance"
-import {Loader} from "../components/Loader"
+import { useUser } from "../context/UserContext";
+import { useEffect, useState } from "react";
+import axiosInstance from "../utils/axiosInstance";
+import {
+    Box,
+    Button,
+    Checkbox,
+    Container,
+    Paper,
+    Stack,
+    Text,
+    Title,
+    Alert
+} from "@mantine/core";
+import { IconCheck, IconX } from "@tabler/icons-react";
+import { Loader } from "../components/Loader";
 
-export const ProfilePage = () => {
-    const {user} = useUser()
-    const [allAudits, setAllAudits] = useState<string[]>([])
-    const [selectedAudits, setSelectedAudits] = useState<string[]>([])
-    const [success, setSuccess] = useState("")
-    const [error, setError] = useState("")
-    const [showAlert, setShowAlert] = useState(true)
-    const [loading, setLoading] = useState(true)
+export default function ProfilePage() {
+    const { user } = useUser();
+    const [allAudits, setAllAudits] = useState<string[]>([]);
+    const [selectedAudits, setSelectedAudits] = useState<string[]>([]);
+    const [success, setSuccess] = useState("");
+    const [error, setError] = useState("");
+    const [showAlert, setShowAlert] = useState(true);
+    const [loading, setLoading] = useState(true);
 
     useEffect(() => {
-        axiosInstance.get("/profile/audits")
-            .then(res => {
-                setAllAudits(res.data.all)
-                setSelectedAudits(res.data.selected)
+        axiosInstance
+            .get("/profile/audits")
+            .then((res) => {
+                setAllAudits(res.data.all);
+                setSelectedAudits(res.data.selected);
             })
-            .catch(err => {
-                console.error("Erreur lors du chargement des audits :", err)
-                setError("Erreur lors du chargement des types d'audit")
-                setSuccess("")
+            .catch((err) => {
+                console.error("Erreur lors du chargement des audits :", err);
+                setError("Erreur lors du chargement des types d'audit");
+                setSuccess("");
             })
-            .finally(() => setLoading(false))
-    }, [])
+            .finally(() => setLoading(false));
+    }, []);
 
     const handleToggle = (auditType: string) => {
-        setSelectedAudits(prev =>
+        setSelectedAudits((prev) =>
             prev.includes(auditType)
-                ? prev.filter(a => a !== auditType)
+                ? prev.filter((a) => a !== auditType)
                 : [...prev, auditType]
-        )
-    }
+        );
+    };
 
     const handleSave = () => {
-        axiosInstance.post("/profile/audits", {selected: selectedAudits})
+        axiosInstance
+            .post("/profile/audits", { selected: selectedAudits })
             .then(() => {
-                setSuccess("Préférences enregistrées avec succès ✅")
-                setError("")
-                setShowAlert(true)
+                setSuccess("Préférences enregistrées avec succès");
+                setError("");
+                setShowAlert(true);
             })
-            .catch(err => {
-                console.error("Erreur lors de la sauvegarde :", err)
-                setError("Erreur lors de l'enregistrement ❌")
-                setSuccess("")
-                setShowAlert(true)
-            })
-    }
+            .catch((err) => {
+                console.error("Erreur lors de la sauvegarde :", err);
+                setError("Erreur lors de l'enregistrement");
+                setSuccess("");
+                setShowAlert(true);
+            });
+    };
 
     useEffect(() => {
         if (success || error) {
-            setShowAlert(true)
-            const timer = setTimeout(() => setShowAlert(false), 5000)
-            return () => clearTimeout(timer)
+            setShowAlert(true);
+            const timer = setTimeout(() => setShowAlert(false), 5000);
+            return () => clearTimeout(timer);
         }
-    }, [success, error])
+    }, [success, error]);
 
-    if (loading) return <Loader/>
+    if (loading) return <Loader />;
 
     return (
-        <div className="p-4">
-            <h1 className="text-xl font-bold">Profil</h1>
-            <p>Bienvenue {user?.first_name} 👋</p>
+        <Container size="sm" p="md">
+            <Paper withBorder p="lg" radius="md" shadow="sm">
+                <Title order={2} mb="xs">Profil</Title>
+                {error && showAlert && (
+                    <Alert color="red" icon={<IconX size={16} />} mb="sm">
+                        {error}
+                    </Alert>
+                )}
+                {success && showAlert && (
+                    <Alert color="green" icon={<IconCheck size={16} />} mb="sm">
+                        {success}
+                    </Alert>
+                )}
 
-            {error && showAlert && <div className="alert alert-error mb-2">{error}</div>}
-            {success && showAlert && <div className="alert alert-success mb-2">{success}</div>}
-
-            <h2 className="mt-6 text-lg font-semibold">Types d'audit souhaités</h2>
-            <div className="mt-2 space-y-2">
-                {allAudits.map(type => (
-                    <label key={type} className="flex items-center space-x-2">
-                        <input
-                            type="checkbox"
+                <Title order={4} mt="md" mb="xs">Types d'audit souhaités</Title>
+                <Stack spacing="xs">
+                    {allAudits.map((type) => (
+                        <Checkbox
+                            key={type}
+                            label={type}
                             checked={selectedAudits.includes(type)}
                             onChange={() => handleToggle(type)}
-                            className="checkbox checkbox-sm"
                         />
-                        <span>{type}</span>
-                    </label>
-                ))}
-            </div>
+                    ))}
+                </Stack>
 
-            <button
-                onClick={handleSave}
-                className="mt-4 btn btn-primary"
-            >
-                Enregistrer
-            </button>
-        </div>
-    )
-}
+                <Button fullWidth mt="lg" onClick={handleSave}>
+                    Enregistrer
+                </Button>
+            </Paper>
+        </Container>
+    );
+};
