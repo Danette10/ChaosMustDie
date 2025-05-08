@@ -11,11 +11,13 @@ export const Navbar = () => {
     const handleLogout = async () => {
         try {
             await axiosInstance.post("/auth/logout");
-            localStorage.removeItem("access_token");
-            setUser(null);
-            navigate("/login", { replace: true });
         } catch (err) {
             console.error("Erreur lors de la déconnexion :", err);
+        } finally {
+            localStorage.removeItem("access_token");
+            localStorage.removeItem("refresh_token");
+            setUser(null);
+            navigate("/login", { replace: true });
         }
     };
 

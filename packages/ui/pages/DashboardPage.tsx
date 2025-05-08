@@ -7,13 +7,15 @@ import {
     Box,
     Button,
     Container,
-    Group, MultiSelect,
+    Group,
+    MultiSelect,
     Paper,
     SimpleGrid,
     Stack,
     Text,
     Title
 } from "@mantine/core";
+import { ContactAuditorModal } from "../modals/ContactAuditorModal"; // ← Import du modal
 
 export default function DashboardPage() {
     const { user } = useUser();
@@ -21,6 +23,9 @@ export default function DashboardPage() {
     const [auditTypes, setAuditTypes] = useState<string[]>([]);
     const [selectedTypes, setSelectedTypes] = useState<string[]>([]);
     const [loading, setLoading] = useState(true);
+
+    const [modalOpen, setModalOpen] = useState(false);
+    const [selectedAuditor, setSelectedAuditor] = useState<any>(null);
 
     useEffect(() => {
         if (user === undefined) return;
@@ -50,19 +55,20 @@ export default function DashboardPage() {
 
     const getBadgeColor = (type: string) => {
         switch (type) {
-            case "SQLI":
-                return "red";
-            case "DDOS":
-                return "orange";
-            case "BRUTEFORCE":
-                return "blue";
-            case "WEB_TECHNOLOGIES":
-                return "green";
-            case "ENDPOINT_DISCOVERY":
-                return "grape";
-            default:
-                return "gray";
+            case "SQLI": return "red";
+            case "DDOS": return "orange";
+            case "BRUTEFORCE": return "blue";
+            case "WEB_TECHNOLOGIES": return "green";
+            case "ENDPOINT_DISCOVERY": return "grape";
+            case "XSS": return "violet";
+            case "HTTP_HEADER_IDENTIFICATION": return "cyan";
+            default: return "gray";
         }
+    };
+
+    const openContactModal = (auditor: any) => {
+        setSelectedAuditor(auditor);
+        setModalOpen(true);
     };
 
     if (loading) return <Loader />;
@@ -77,10 +83,7 @@ export default function DashboardPage() {
                 {user?.user_type === "company" && (
                     <>
                         <Paper shadow="sm" p="lg" withBorder>
-                            <Group position="apart" mb="sm">
-                                <Title order={4}>Filtres par type d'audit</Title>
-                            </Group>
-
+                            <Title order={4} mb="sm">Filtres par type d'audit</Title>
                             <MultiSelect
                                 label="Filtres par type d'audit"
                                 placeholder="Sélectionner un ou plusieurs types"
@@ -91,16 +94,6 @@ export default function DashboardPage() {
                                 clearable
                                 nothingFoundMessage="Aucun type trouvé"
                             />
-
-                            {selectedTypes.length > 0 && (
-                                <Group mt="md" spacing="xs" wrap="wrap">
-                                    {selectedTypes.map((type) => (
-                                        <Badge key={type} color={getBadgeColor(type)} variant="outline">
-                                            {type}
-                                        </Badge>
-                                    ))}
-                                </Group>
-                            )}
                         </Paper>
 
                         <Box>
@@ -112,10 +105,11 @@ export default function DashboardPage() {
                             <SimpleGrid cols={1} breakpoints={[{ minWidth: 768, cols: 2 }]} spacing="md">
                                 {filteredAuditors.slice(0, 5).map((auditor) => (
                                     <Paper key={auditor.id} shadow="xs" p="md" withBorder>
-                                        <Text fw={600}>{auditor.name}</Text>
-                                        <Text size="sm" c="dimmed">
-                                            {auditor.email}
-                                        </Text>
+                                        <Group position="apart" mb="xs">
+                                            <Text fw={600}>{auditor.name}</Text>
+                                            <Button size="xs" onClick={() => openContactModal(auditor)}>Contacter</Button>
+                                        </Group>
+                                        <Text size="sm" c="dimmed">{auditor.email}</Text>
                                         <Group spacing="xs" mt="xs" wrap="wrap">
                                             {auditor.audit_types.map((type: string) => (
                                                 <Badge key={type} color={getBadgeColor(type)} variant="outline">
@@ -130,9 +124,17 @@ export default function DashboardPage() {
                                 )}
                             </SimpleGrid>
                         </Box>
+
+                        <ContactAuditorModal
+                            opened={modalOpen}
+                            onClose={() => setModalOpen(false)}
+                            auditorId={selectedAuditor?.id || ""}
+                            auditorName={selectedAuditor?.name || ""}
+                        />
+
                     </>
                 )}
             </Stack>
         </Container>
     );
-};
+}
