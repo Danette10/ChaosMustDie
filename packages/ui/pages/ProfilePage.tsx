@@ -87,6 +87,30 @@ export default function ProfilePage() {
                     <Text mb="xs"><strong>Type d'utilisateur :</strong> {user && UserTypeLabel[user.user_type]}</Text>
                 </Box>
 
+                {user?.user_type === "company" && (
+                    <Box mt="md">
+                        <Title order={3} align="center" mb="xs">Mot de passe unique</Title>
+                        <Button
+                            color="red"
+                            fullWidth
+                            onClick={() => {
+                                axiosInstance.post("/auth/reset-unique-password")
+                                    .then(res => {
+                                        setSuccess(`Mot de passe réinitialisé : ${res.data.new_password}`);
+                                        setError("");
+                                    })
+                                    .catch(err => {
+                                        console.error("Erreur lors de la réinitialisation du mot de passe :", err);
+                                        setError("Échec de la réinitialisation du mot de passe");
+                                        setSuccess("");
+                                    });
+                            }}
+                        >
+                            Réinitialiser le mot de passe unique
+                        </Button>
+                    </Box>
+                )}
+
                 <Box>
                     <Title order={3} mt="md" mb="xs" align="center">Types d'audit souhaités</Title>
                     <Stack spacing="xs">

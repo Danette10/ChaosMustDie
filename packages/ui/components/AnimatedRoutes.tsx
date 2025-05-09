@@ -42,7 +42,7 @@ export default function AnimatedRoutes() {
                         <Route path="/profile" element={<PageTransition><ProfilePage /></PageTransition>} />
                         <Route path="/chat/*" element={<PageTransition><ChatPage /></PageTransition>} />
                         <Route path="/auditors" element={<PageTransition><AllAuditorsPage /></PageTransition>} />
-                        <Route path="/audits" element={<PageTransition><AuditPage/></PageTransition>}/>
+                        <Route path="/audit/*" element={<PageTransition><AuditPage/></PageTransition>}/>
                     </Route>
                 </Routes>
             </Suspense>

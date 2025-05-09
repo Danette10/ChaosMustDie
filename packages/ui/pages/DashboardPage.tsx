@@ -81,7 +81,10 @@ export default function DashboardPage() {
                                     <AuditorCard
                                         key={auditor.id}
                                         auditor={auditor}
-                                        onContact={setSelectedAuditor}
+                                        onContact={(auditor) => {
+                                            setSelectedAuditor(auditor);
+                                            setModalOpen(true);
+                                        }}
                                     />
                                 ))}
                             </SimpleGrid>
