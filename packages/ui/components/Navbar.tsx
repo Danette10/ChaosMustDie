@@ -1,14 +1,7 @@
-import { useNavigate, useLocation } from "react-router-dom";
-import { useUser } from "../context/UserContext";
+import {useLocation, useNavigate} from "react-router-dom";
+import {useUser} from "../context/UserContext";
 import axiosInstance from "../utils/axiosInstance";
-import {
-    ActionIcon,
-    Button,
-    Group,
-    Paper,
-    useComputedColorScheme,
-    useMantineColorScheme
-} from "@mantine/core";
+import {ActionIcon, Button, Group, Paper, useComputedColorScheme, useMantineColorScheme} from "@mantine/core";
 import {IconMoon, IconSun} from "@tabler/icons-react";
 
 export const Navbar = () => {
@@ -56,6 +49,14 @@ export const Navbar = () => {
                         onClick={() => navigate("/chat")}
                     >
                         Chat
+                    </Button>
+
+                    <Button
+                        size="xs"
+                        variant={location.pathname === "/audits" ? "filled" : "subtle"}
+                        onClick={() => navigate("/audits")}
+                    >
+                        Audits
                     </Button>
 
                     <Button size="xs" color="red" onClick={handleLogout}>

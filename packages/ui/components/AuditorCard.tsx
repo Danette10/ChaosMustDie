@@ -1,4 +1,5 @@
-import { Badge, Button, Group, Paper, Text } from "@mantine/core";
+import {Badge, Button, Group, Paper, Text} from "@mantine/core";
+import {AuditTypeColors, AuditTypeEnum, AuditTypeLabels} from "../enum/AuditTypeEnum";
 
 interface AuditorCardProps {
     auditor: {
@@ -10,19 +11,6 @@ interface AuditorCardProps {
     onContact: (auditor: any) => void;
 }
 
-const getBadgeColor = (type: string) => {
-    switch (type) {
-        case "SQLI": return "red";
-        case "DDOS": return "orange";
-        case "BRUTEFORCE": return "blue";
-        case "WEB_TECHNOLOGIES": return "green";
-        case "ENDPOINT_DISCOVERY": return "grape";
-        case "XSS": return "violet";
-        case "HTTP_HEADER_IDENTIFICATION": return "cyan";
-        default: return "gray";
-    }
-};
-
 export function AuditorCard({ auditor, onContact }: AuditorCardProps) {
     return (
         <Paper shadow="xs" p="md" withBorder>
@@ -32,11 +20,18 @@ export function AuditorCard({ auditor, onContact }: AuditorCardProps) {
             </Group>
             <Text size="sm" c="dimmed">{auditor.email}</Text>
             <Group spacing="xs" mt="xs" wrap="wrap">
-                {auditor.audit_types.map((type) => (
-                    <Badge key={type} color={getBadgeColor(type)} variant="outline">
-                        {type}
-                    </Badge>
-                ))}
+                {auditor.audit_types.map((type) => {
+                    const enumKey = type as AuditTypeEnum;
+                    return (
+                        <Badge
+                            key={type}
+                            color={AuditTypeColors[enumKey] || "gray"}
+                            variant="outline"
+                        >
+                            {AuditTypeLabels[enumKey] || type}
+                        </Badge>
+                    );
+                })}
             </Group>
         </Paper>
     );

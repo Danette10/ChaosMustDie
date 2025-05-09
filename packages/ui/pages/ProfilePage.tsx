@@ -1,20 +1,11 @@
-import { useUser } from "../context/UserContext";
-import { useEffect, useState } from "react";
+import {useUser} from "../context/UserContext";
+import {useEffect, useState} from "react";
 import axiosInstance from "../utils/axiosInstance";
-import {
-    Box,
-    Button,
-    Checkbox,
-    Container,
-    Paper,
-    Stack,
-    Text,
-    Title,
-    Alert
-} from "@mantine/core";
-import { IconCheck, IconX } from "@tabler/icons-react";
-import { Loader } from "../components/Loader";
-import {UserTypeEnum, UserTypeLabel} from "../enum/UserType";
+import {Alert, Box, Button, Checkbox, Container, Paper, Stack, Text, Title} from "@mantine/core";
+import {IconCheck, IconX} from "@tabler/icons-react";
+import {Loader} from "../components/Loader";
+import {UserTypeLabel} from "../enum/UserTypeEnum";
+import {AuditTypeEnum, AuditTypeLabels} from "../enum/AuditTypeEnum";
 
 export default function ProfilePage() {
     const { user } = useUser();
@@ -102,13 +93,12 @@ export default function ProfilePage() {
                         {allAudits.map((type) => (
                             <Checkbox
                                 key={type}
-                                label={type}
+                                label={AuditTypeLabels[type as AuditTypeEnum] || type}
                                 checked={selectedAudits.includes(type)}
                                 onChange={() => handleToggle(type)}
                             />
                         ))}
                     </Stack>
-
                     <Button fullWidth mt="lg" onClick={handleSave}>
                         Enregistrer
                     </Button>

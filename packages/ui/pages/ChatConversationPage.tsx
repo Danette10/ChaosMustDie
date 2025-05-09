@@ -1,15 +1,25 @@
-import { useParams } from "react-router-dom";
-import { useEffect, useRef, useState } from "react";
+import {useParams} from "react-router-dom";
+import {useEffect, useRef, useState} from "react";
 import {
-    Box, Button, Group, Paper, ScrollArea, Stack, Text,
-    Textarea, Title, useMantineTheme, useComputedColorScheme, Badge
+    Badge,
+    Box,
+    Button,
+    Group,
+    Paper,
+    ScrollArea,
+    Stack,
+    Text,
+    Textarea,
+    Title,
+    useComputedColorScheme,
+    useMantineTheme
 } from "@mantine/core";
 import PageTransition from "../components/PageTransition";
 import axiosInstance from "../utils/axiosInstance";
-import { BackButton } from "../components/BackButton";
+import {BackButton} from "../components/BackButton";
 import ConfirmModal from "../modals/ConfirmModal";
-import { useUser } from "../context/UserContext";
-import { UserTypeEnum } from "../enum/UserType";
+import {useUser} from "../context/UserContext";
+import {UserTypeEnum} from "../enum/UserTypeEnum";
 import EndAuditModal from "../modals/EndAuditModal";
 
 export default function ChatConversationPage() {

@@ -1,11 +1,11 @@
-import { lazy, Suspense } from "react";
-import { Routes, Route, useLocation } from "react-router-dom";
-import { AnimatePresence } from "framer-motion";
+import {lazy, Suspense} from "react";
+import {Route, Routes, useLocation} from "react-router-dom";
+import {AnimatePresence} from "framer-motion";
 import PageTransition from "./PageTransition";
-import { AuthGuard } from "./AuthGuard";
+import {AuthGuard} from "./AuthGuard";
 import Layout from "./Layout";
-import { Loader } from "./Loader";
-import { useEnforceConfirmationRedirect } from "../hooks/useEnforceConfirmationRedirect";
+import {Loader} from "./Loader";
+import {useEnforceConfirmationRedirect} from "../hooks/useEnforceConfirmationRedirect";
 
 const WelcomePage = lazy(() => import("../pages/WelcomePage"));
 const LoginPage = lazy(() => import("../pages/LoginPage"));
@@ -15,6 +15,7 @@ const DashboardPage = lazy(() => import("../pages/DashboardPage"));
 const ProfilePage = lazy(() => import("../pages/ProfilePage"));
 const ChatPage = lazy(() => import("../pages/ChatPage"));
 const AllAuditorsPage = lazy(() => import("../pages/AllAuditorsPage"));
+const AuditPage = lazy(() => import("../pages/AuditPage"));
 
 export default function AnimatedRoutes() {
     const location = useLocation();
@@ -41,6 +42,7 @@ export default function AnimatedRoutes() {
                         <Route path="/profile" element={<PageTransition><ProfilePage /></PageTransition>} />
                         <Route path="/chat/*" element={<PageTransition><ChatPage /></PageTransition>} />
                         <Route path="/auditors" element={<PageTransition><AllAuditorsPage /></PageTransition>} />
+                        <Route path="/audits" element={<PageTransition><AuditPage/></PageTransition>}/>
                     </Route>
                 </Routes>
             </Suspense>
