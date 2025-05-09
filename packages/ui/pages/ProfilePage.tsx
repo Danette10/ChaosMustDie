@@ -76,7 +76,7 @@ export default function ProfilePage() {
 
     return (
         <Container size="sm" p="md">
-            <Paper withBorder p="lg" radius="md" shadow="sm">
+            <Paper p="lg" radius="md" shadow="sm">
                 <Title order={2} mb="xs">Profil</Title>
                 {error && showAlert && (
                     <Alert color="red" icon={<IconX size={16} />} mb="sm">

@@ -19,7 +19,7 @@
     z-index: 1;
     font-weight: 500;
     transition: color 100ms ease;
-    color: var(--mantine-color-gray-7);
+    color: var(--mantine-color-gray-4);
 
     &[data-active] {
         color: var(--mantine-color-black);

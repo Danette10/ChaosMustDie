@@ -1,12 +1,22 @@
 import { useNavigate, useLocation } from "react-router-dom";
 import { useUser } from "../context/UserContext";
 import axiosInstance from "../utils/axiosInstance";
-import { Box, Button, Group, Paper } from "@mantine/core";
+import {
+    ActionIcon,
+    Button,
+    Group,
+    Paper,
+    useComputedColorScheme,
+    useMantineColorScheme
+} from "@mantine/core";
+import {IconMoon, IconSun} from "@tabler/icons-react";
 
 export const Navbar = () => {
     const { user, setUser } = useUser();
     const navigate = useNavigate();
     const location = useLocation();
+    const { setColorScheme } = useMantineColorScheme();
+    const computedColorScheme = useComputedColorScheme('light', { getInitialValueInEffect: true });
 
     const handleLogout = async () => {
         try {
@@ -21,8 +31,8 @@ export const Navbar = () => {
     };
 
     return (
-        <Paper shadow="sm" px="md" py="sm" radius={0} withBorder>
-            <Group position="apart" align="center">
+        <Paper shadow="sm" px="md" py="sm" radius={0} style={{paddingRight: "0"}}>
+            <Group position="apart" align="center" style={{justifyContent: "space-between"}}>
                 <Group spacing="xs">
                     <Button
                         size="xs"
@@ -48,10 +58,22 @@ export const Navbar = () => {
                         Chat
                     </Button>
 
-                    <Button size="xs" color="red" variant="light" onClick={handleLogout}>
+                    <Button size="xs" color="red" onClick={handleLogout}>
                         Déconnexion
                     </Button>
                 </Group>
+                <ActionIcon
+                    onClick={() => setColorScheme(computedColorScheme === 'light' ? 'dark' : 'light')}
+                    variant="default"
+                    size="xl"
+                    aria-label="Toggle color scheme"
+                >
+                    {computedColorScheme === 'dark' ? (
+                        <IconSun stroke={1.5}/>
+                    ) : (
+                        <IconMoon stroke={1.5}/>
+                    )}
+                </ActionIcon>
             </Group>
         </Paper>
     );

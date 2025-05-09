@@ -9,6 +9,14 @@ type User = {
   email: string;
   user_type: UserTypeEnum;
   phone_number?: string;
+  company?: {
+      id: number;
+      name: string;
+      siren: string;
+      address: string;
+      contact_email: string;
+      link: string;
+  };
 };
 
 type UserContextType = {

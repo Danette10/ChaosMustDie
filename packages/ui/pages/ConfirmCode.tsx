@@ -65,8 +65,8 @@ export default function ConfirmCode() {
             exit={{ opacity: 0, x: -50 }}
             transition={{ duration: 0.3 }}
         >
-            <Center h="100vh" px="md" bg="gray.0">
-                <Paper w={360} withBorder p="lg" radius="md" shadow="sm">
+            <Center h="100vh" px="md">
+                <Paper w={360} p="lg" radius="md" shadow="sm">
                     <Group justify="space-between" align="center" mb="md">
                         <BackButton />
                         <Title order={3} m={0}>

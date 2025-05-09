@@ -48,14 +48,14 @@ export default function LoginPage() {
   };
 
   return (
-      <Center h="100vh" bg="gray.0" px="md">
-        <Paper shadow="md" radius="md" p="xl" w={350} withBorder>
+      <Center h="100vh" px="md">
+        <Paper shadow="md" radius="md" p="xl" style={{ width: "100%" }}>
           <Group justify="space-between" align="center" mb="md">
             <BackButton />
             <Title order={2} ta="center" m={0}>
               Connexion
             </Title>
-            <Box w={32} />
+            <Box/>
           </Group>
 
           {error && (

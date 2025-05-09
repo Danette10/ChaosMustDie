@@ -6,6 +6,8 @@ import {
     Stack,
     Text,
     Title,
+    useMantineTheme,
+    useComputedColorScheme,
     Loader,
 } from "@mantine/core";
 import { useNavigate } from "react-router-dom";
@@ -16,6 +18,9 @@ export default function ChatListPage() {
     const [conversations, setConversations] = useState([]);
     const [loading, setLoading] = useState(true);
     const navigate = useNavigate();
+    const theme = useMantineTheme();
+    const colorScheme = useComputedColorScheme();
+    const isDark = colorScheme === "dark";
 
     useEffect(() => {
         axiosInstance.get("/chat/conversations")
@@ -26,14 +31,7 @@ export default function ChatListPage() {
 
     const formatTimestamp = (timestamp: string) => {
         const date = new Date(timestamp);
-        return date.toLocaleDateString("fr-FR", {
-            day: "2-digit",
-            month: "2-digit",
-            year: "numeric",
-        }) + " à " + date.toLocaleTimeString("fr-FR", {
-            hour: "2-digit",
-            minute: "2-digit",
-        });
+        return `le ${date.toLocaleDateString("fr-FR")} à ${date.toLocaleTimeString("fr-FR")}`;
     };
 
     return (
@@ -57,17 +55,19 @@ export default function ChatListPage() {
                                     }}
                                     onClick={() => navigate(`/chat/${conv.id}`)}
                                     onMouseEnter={(e) =>
-                                        (e.currentTarget.style.background = "#f9f9f9")
+                                        (e.currentTarget.style.background = isDark ? theme.colors.dark[5] : theme.colors.gray[0])
                                     }
                                     onMouseLeave={(e) =>
-                                        (e.currentTarget.style.background = "white")
+                                        (e.currentTarget.style.background = isDark ? theme.colors.dark[7] : theme.white)
                                     }
                                 >
                                     <Stack spacing={4}>
                                         <Group position="apart" style={{ justifyContent: "space-between", alignItems: "center" }}>
                                             <Text fw={500}>{conv.name}</Text>
-                                            <Text size="xs" color="gray">
-                                                {conv.last_timestamp && formatTimestamp(conv.last_timestamp)}
+                                            <Text size="sm">
+                                                <em>
+                                                    {conv.last_timestamp && formatTimestamp(conv.last_timestamp)}
+                                                </em>
                                             </Text>
                                         </Group>
                                         <Text
