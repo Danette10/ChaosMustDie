@@ -9,7 +9,6 @@
     "react-dom": "^19.0.0"
   },
   "scripts": {
-    "lint": "eslint .",
-    "preinstall": "echo '⛔️ Ne pas faire npm install ici ! Va à la racine du projet.' && exit 1"
+    "lint": "eslint ."
   }
 }

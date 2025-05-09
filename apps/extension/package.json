@@ -7,7 +7,6 @@
     "dev": "vite",
     "build": "vite build",
     "lint": "eslint .",
-    "preview": "vite preview",
-    "preinstall": "echo '⛔️ Ne pas faire npm install ici ! Va à la racine du projet.' && exit 1"
+    "preview": "vite preview"
   }
 }
