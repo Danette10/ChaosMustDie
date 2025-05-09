@@ -51,8 +51,7 @@ export default function StartAuditPage() {
                 ...extraParams,
             };
             await axiosInstance.post(routeMap[selectedType], payload);
-
-            setSuccess("Audit démarré avec succès !");
+            setSuccess("Audit terminé avec succès");
             setError("");
         } catch (err) {
             setError(err.response?.data?.message || "Erreur lors du démarrage de l’audit");

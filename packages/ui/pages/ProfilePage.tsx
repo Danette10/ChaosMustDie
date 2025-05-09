@@ -96,7 +96,7 @@ export default function ProfilePage() {
                             onClick={() => {
                                 axiosInstance.post("/auth/reset-unique-password")
                                     .then(res => {
-                                        setSuccess(`Mot de passe réinitialisé : ${res.data.new_password}`);
+                                        setSuccess(res.data.message);
                                         setError("");
                                     })
                                     .catch(err => {
