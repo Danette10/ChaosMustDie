@@ -97,7 +97,7 @@ export default function ConfirmCode() {
                         autoFocus
                         size="lg"
                         mb="md"
-                        disabled={submitting} // 🔐 désactivé pendant loading
+                        disabled={submitting}
                         style={{ display: "flex", justifyContent: "center", gap: 8 }}
                     />
 

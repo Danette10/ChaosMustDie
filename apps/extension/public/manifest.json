@@ -5,7 +5,8 @@
   "description": "Extension d'audit de sécurité informatique",
   "permissions": [
     "storage",
-    "cookies"
+    "cookies",
+    "downloads"
   ],
   "host_permissions": [
     "https://127.0.0.1:5000/api/v1/*"

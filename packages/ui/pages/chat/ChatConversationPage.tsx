@@ -193,7 +193,7 @@ export default function ChatConversationPage() {
                                                 auditor_id: partner?.id,
                                                 company_id: user.company.id,
                                             });
-                                            // Re-fetch après création
+
                                             const statusRes = await axiosInstance.get("/audit/status", {
                                                 params: {
                                                     auditor_id: partner?.id,

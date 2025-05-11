@@ -131,13 +131,12 @@ export default function StartAuditPage() {
                                 const blob = new Blob([response.data], { type: "application/pdf" });
                                 const url = window.URL.createObjectURL(blob);
 
-                                const a = document.createElement("a");
-                                a.href = url;
-                                a.download = `rapport_audit_${auditId}.pdf`;
-                                document.body.appendChild(a);
-                                a.click();
-                                a.remove();
-                                window.URL.revokeObjectURL(url);
+                                window.open(url, "_blank");
+
+                                setTimeout(() => {
+                                    window.URL.revokeObjectURL(url);
+                                }, 5000);
+
                             } catch (err) {
                                 console.error("Erreur lors du téléchargement", err);
                             }
