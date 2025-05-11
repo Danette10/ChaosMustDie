@@ -53,7 +53,7 @@ export const Navbar = () => {
 
                     <Button
                         size="xs"
-                        variant={location.pathname === "/audit" ? "filled" : "subtle"}
+                        variant={location.pathname.startsWith("/audit") ? "filled" : "subtle"}
                         onClick={() => navigate("/audit")}
                     >
                         Audits
