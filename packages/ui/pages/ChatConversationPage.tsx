@@ -181,25 +181,39 @@ export default function ChatConversationPage() {
                         </Title>
 
                         {user?.user_type === UserTypeEnum.COMPANY && (
-                            <Button
-                                size="xs"
-                                variant="light"
-                                onClick={async () => {
-                                    try {
-                                        await axiosInstance.post("/audit/request", {
-                                            auditor_id: partner?.id,
-                                            company_id: user.company.id,
-                                        });
-                                        setAuditStatus("pending");
-                                    } catch (err) {
-                                        console.error("Erreur demande audit :", err);
-                                    }
-                                }}
-                                disabled={auditStatus === "pending" || auditStatus === "in_progress"}
-                            >
-                                {auditStatus === "pending" ? "Audit en attente" : "Demander l'audit"}
-                            </Button>
+                            auditStatus === "in_progress" ? (
+                                <Badge color="teal" size="md">Audit en cours</Badge>
+                            ) : (
+                                <Button
+                                    size="xs"
+                                    variant="light"
+                                    onClick={async () => {
+                                        try {
+                                            await axiosInstance.post("/audit/request", {
+                                                auditor_id: partner?.id,
+                                                company_id: user.company.id,
+                                            });
+                                            // Re-fetch après création
+                                            const statusRes = await axiosInstance.get("/audit/status", {
+                                                params: {
+                                                    auditor_id: partner?.id,
+                                                    company_id: user.company.id,
+                                                },
+                                            });
+                                            setAuditStatus(statusRes.data.status);
+                                        } catch (err) {
+                                            console.error("Erreur demande audit :", err);
+                                        }
+                                    }}
+                                    disabled={auditStatus === "pending"}
+                                >
+                                    {auditStatus === "pending"
+                                        ? "Demande d'audit envoyée"
+                                        : "Demander un audit"}
+                                </Button>
+                            )
                         )}
+
 
                         {user?.user_type === UserTypeEnum.AUDITOR && auditStatus === "pending" && (
                             <Group spacing={4}>

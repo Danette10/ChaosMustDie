@@ -1,14 +1,16 @@
-import {useEffect, useState} from "react";
-import {useNavigate} from "react-router-dom";
-import {Box, Button, Container, Group, Paper, SimpleGrid, Stack, Title,} from "@mantine/core";
-
+import { useEffect, useState } from "react";
+import { useNavigate } from "react-router-dom";
+import {
+    Box, Button, Container, Group, Paper, SimpleGrid, Stack, Text, Title
+} from "@mantine/core";
 import axiosInstance from "../utils/axiosInstance";
-import {useUser} from "../context/UserContext";
-import {Loader} from "../components/Loader";
-import {ContactAuditorModal} from "../modals/ContactAuditorModal";
-import {AuditorCard} from "../components/AuditorCard";
+import { useUser } from "../context/UserContext";
+import { Loader } from "../components/Loader";
+import { ContactAuditorModal } from "../modals/ContactAuditorModal";
+import { AuditorCard } from "../components/AuditorCard";
 import MultiFilter from "../components/MultiFilter";
-import {AuditTypeLabels} from "../enum/AuditTypeEnum";
+import { AuditTypeLabels } from "../enum/AuditTypeEnum";
+import { AuditList } from "../components/AuditList";
 
 export default function DashboardPage() {
     const { user } = useUser();
@@ -20,23 +22,34 @@ export default function DashboardPage() {
     const [loading, setLoading] = useState(true);
     const [modalOpen, setModalOpen] = useState(false);
     const [selectedAuditor, setSelectedAuditor] = useState<any>(null);
+    const [audits, setAudits] = useState<any[]>([]);
 
     useEffect(() => {
-        if (!user || user.user_type !== "company") {
-            setLoading(false);
-            return;
+        if (!user) return;
+
+        if (user.user_type === "company") {
+            Promise.all([
+                axiosInstance.get("/profile/auditors"),
+                axiosInstance.get("/profile/audits"),
+            ])
+                .then(([auditorsRes, auditsRes]) => {
+                    setAuditors(auditorsRes.data);
+                    setAuditTypes(auditsRes.data.all);
+                })
+                .catch(console.error)
+                .finally(() => setLoading(false));
         }
 
-        Promise.all([
-            axiosInstance.get("/profile/auditors"),
-            axiosInstance.get("/profile/audits"),
-        ])
-            .then(([auditorsRes, auditsRes]) => {
-                setAuditors(auditorsRes.data);
-                setAuditTypes(auditsRes.data.all);
-            })
-            .catch(console.error)
-            .finally(() => setLoading(false));
+        if (user.user_type === "auditor") {
+            axiosInstance
+                .get("/audit/my-audits")
+                .then((res) => {
+                    const inProgress = res.data.in_progress || [];
+                    setAudits(inProgress);
+                })
+                .catch(console.error)
+                .finally(() => setLoading(false));
+        }
     }, [user]);
 
     const filteredAuditors = selectedTypes.length
@@ -81,8 +94,8 @@ export default function DashboardPage() {
                                     <AuditorCard
                                         key={auditor.id}
                                         auditor={auditor}
-                                        onContact={(auditor) => {
-                                            setSelectedAuditor(auditor);
+                                        onContact={(a) => {
+                                            setSelectedAuditor(a);
                                             setModalOpen(true);
                                         }}
                                     />
@@ -98,6 +111,21 @@ export default function DashboardPage() {
                         />
                     </>
                 )}
+
+                {user?.user_type === "auditor" && (
+                    <>
+                        <Group position="apart" mb="md">
+                            <Title order={2}>Audits en cours</Title>
+                            <Button mt="md" onClick={() => navigate("/audit")}>
+                                Voir tous les audits
+                            </Button>
+                        </Group>
+                        <AuditList
+                            limit={5}
+                            statusFilter={["in_progress"]}/>
+                    </>
+                )}
+
             </Stack>
         </Container>
     );
