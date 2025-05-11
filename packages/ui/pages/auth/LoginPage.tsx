@@ -1,8 +1,8 @@
 import { useState } from "react";
 import { useNavigate } from "react-router-dom";
-import { useUser } from "../context/UserContext";
-import { BackButton } from "../components/BackButton";
-import axiosInstance from "../utils/axiosInstance";
+import { useUser } from "../../context/UserContext";
+import { BackButton } from "../../components/BackButton";
+import axiosInstance from "../../utils/axiosInstance";
 import {
   Alert,
   Box,

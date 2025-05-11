@@ -14,13 +14,13 @@ import {
     useComputedColorScheme,
     useMantineTheme
 } from "@mantine/core";
-import PageTransition from "../components/PageTransition";
-import axiosInstance from "../utils/axiosInstance";
-import {BackButton} from "../components/BackButton";
-import ConfirmModal from "../modals/ConfirmModal";
-import {useUser} from "../context/UserContext";
-import {UserTypeEnum} from "../enum/UserTypeEnum";
-import EndAuditModal from "../modals/EndAuditModal";
+import PageTransition from "../../components/PageTransition";
+import axiosInstance from "../../utils/axiosInstance";
+import {BackButton} from "../../components/BackButton";
+import ConfirmModal from "../../modals/ConfirmModal";
+import {useUser} from "../../context/UserContext";
+import {UserTypeEnum} from "../../enum/UserTypeEnum";
+import EndAuditModal from "../../modals/EndAuditModal";
 
 export default function ChatConversationPage() {
     const { conversationId } = useParams();

@@ -8,14 +8,14 @@ import {Loader} from "./Loader";
 import {useEnforceConfirmationRedirect} from "../hooks/useEnforceConfirmationRedirect";
 
 const WelcomePage = lazy(() => import("../pages/WelcomePage"));
-const LoginPage = lazy(() => import("../pages/LoginPage"));
-const RegisterPage = lazy(() => import("../pages/RegisterPage"));
-const ConfirmCode = lazy(() => import("../pages/ConfirmCode"));
+const LoginPage = lazy(() => import("../pages/auth/LoginPage"));
+const RegisterPage = lazy(() => import("../pages/auth/RegisterPage"));
+const ConfirmCode = lazy(() => import("../pages/auth/ConfirmCode"));
 const DashboardPage = lazy(() => import("../pages/DashboardPage"));
 const ProfilePage = lazy(() => import("../pages/ProfilePage"));
-const ChatPage = lazy(() => import("../pages/ChatPage"));
+const ChatPage = lazy(() => import("../pages/chat/ChatPage"));
 const AllAuditorsPage = lazy(() => import("../pages/AllAuditorsPage"));
-const AuditPage = lazy(() => import("../pages/AuditPage"));
+const AuditPage = lazy(() => import("../pages/audit/AuditPage"));
 
 export default function AnimatedRoutes() {
     const location = useLocation();

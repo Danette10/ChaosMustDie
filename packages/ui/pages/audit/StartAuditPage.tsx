@@ -1,9 +1,9 @@
 import {useEffect, useState} from "react";
 import {Navigate, useParams} from "react-router-dom";
 import {Alert, Button, Container, PasswordInput, Select, Stack, TextInput, Title} from "@mantine/core";
-import axiosInstance from "../utils/axiosInstance";
-import {useUser} from "../context/UserContext";
-import {auditFieldConfig} from "../utils/auditConfig";
+import axiosInstance from "../../utils/axiosInstance";
+import {useUser} from "../../context/UserContext";
+import {auditFieldConfig} from "../../utils/auditConfig";
 
 export default function StartAuditPage() {
     const {auditId} = useParams();

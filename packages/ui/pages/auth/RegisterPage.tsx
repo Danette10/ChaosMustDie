@@ -11,11 +11,11 @@ import {
     Group,
     Container, Menu
 } from "@mantine/core";
-import { BackButton } from "../components/BackButton";
-import axiosInstance from "../utils/axiosInstance";
-import classes from "../styles/RegisterPage.module.css";
+import { BackButton } from "../../components/BackButton";
+import axiosInstance from "../../utils/axiosInstance";
+import classes from "../../styles/RegisterPage.module.css";
 import { useNavigate } from "react-router-dom";
-import RegisterForm from "../components/RegisterForm";
+import RegisterForm from "../../components/RegisterForm";
 
 export default function RegisterPage() {
     const navigate = useNavigate();

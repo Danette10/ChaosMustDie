@@ -13,8 +13,8 @@ import {
     Group
 } from "@mantine/core";
 import { IconCheck, IconX } from "@tabler/icons-react";
-import { BackButton } from "../components/BackButton";
-import axiosInstance from "../utils/axiosInstance";
+import { BackButton } from "../../components/BackButton";
+import axiosInstance from "../../utils/axiosInstance";
 
 export default function ConfirmCode() {
     const [code, setCode] = useState("");

@@ -11,8 +11,8 @@ import {
     Loader,
 } from "@mantine/core";
 import { useNavigate } from "react-router-dom";
-import PageTransition from "../components/PageTransition";
-import axiosInstance from "../utils/axiosInstance";
+import PageTransition from "../../components/PageTransition";
+import axiosInstance from "../../utils/axiosInstance";
 
 export default function ChatListPage() {
     const [conversations, setConversations] = useState([]);
