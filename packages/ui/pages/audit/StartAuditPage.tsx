@@ -17,11 +17,12 @@ import axiosInstance from "../../utils/axiosInstance";
 import {useUser} from "../../context/UserContext";
 import {auditFieldConfig} from "../../utils/auditConfig";
 import ConfirmModal from "../../modals/ConfirmModal";
+import {AuditTypeEnum, AuditTypeLabels} from "../../enum/AuditTypeEnum";
 
 export default function StartAuditPage() {
     const {auditId} = useParams();
-    const [availableTypes, setAvailableTypes] = useState<string[]>([]);
-    const [selectedTypes, setSelectedTypes] = useState<string[]>([]);
+    const [availableTypes, setAvailableTypes] = useState<AuditTypeEnum[]>([]);
+    const [selectedTypes, setSelectedTypes] = useState<AuditTypeEnum[]>([]);
     const [uniquePassword, setUniquePassword] = useState("");
     const [error, setError] = useState("");
     const [success, setSuccess] = useState("");
@@ -33,6 +34,7 @@ export default function StartAuditPage() {
     const [confirmOpen, setConfirmOpen] = useState(false);
     const [hasReport, setHasReport] = useState(false);
 
+
     if (user?.user_type !== "auditor") {
         return <Navigate to="/audit" replace/>;
     }
@@ -40,8 +42,10 @@ export default function StartAuditPage() {
     useEffect(() => {
         axiosInstance
             .get(`/audit/${auditId}/available-types`)
-            .then((res) => setAvailableTypes(res.data.types))
-            .catch(() => setError("Erreur lors du chargement des types d'audit."));
+            .then((res) => setAvailableTypes(
+                res.data.types.map((type: string) => type.toUpperCase()) // pour matcher AuditTypeEnum
+            ))
+    .catch(() => setError("Erreur lors du chargement des types d'audit."));
     }, [auditId]);
 
     useEffect(() => {
@@ -58,6 +62,27 @@ export default function StartAuditPage() {
         });
     }, [auditId]);
 
+    useEffect(() => {
+        setExtraParams((prevParams) => {
+            const updatedParams = {...prevParams};
+
+            for (const type of selectedTypes) {
+                if (!updatedParams[type]) updatedParams[type] = {};
+
+                for (const field of auditFieldConfig[type.toLowerCase()] || []) {
+                    if (
+                        updatedParams[type][field.key] === undefined &&
+                        field.default !== undefined
+                    ) {
+                        updatedParams[type][field.key] = field.default;
+                    }
+                }
+            }
+
+            return updatedParams;
+        });
+    }, [selectedTypes]);
+
 
     const startAudit = async () => {
         const routeMap: Record<string, string> = {
@@ -70,7 +95,10 @@ export default function StartAuditPage() {
             http_header_identification: "/headers/scan",
         };
 
-        const orderedTypes = [...selectedTypes.filter(t => t !== "ddos"), ...selectedTypes.filter(t => t === "ddos")];
+        const orderedTypes = [
+            ...selectedTypes.filter((t) => t !== AuditTypeEnum.DDOS),
+            ...selectedTypes.filter((t) => t === AuditTypeEnum.DDOS),
+        ];
 
         setAuditStatus(Object.fromEntries(selectedTypes.map(type => [type, "pending"])));
         setError("");
@@ -80,7 +108,7 @@ export default function StartAuditPage() {
         const results: Record<string, any> = {};
 
         for (const type of orderedTypes) {
-            const url = routeMap[type];
+            const url = routeMap[type.toLowerCase() as keyof typeof routeMap];
             const payload = {
                 audit_id: auditId,
                 unique_password: uniquePassword,
@@ -91,9 +119,26 @@ export default function StartAuditPage() {
                 const res = await axiosInstance.post(url, payload);
                 setAuditStatus(prev => ({ ...prev, [type]: "success" }));
                 results[type] = res.data;
-            } catch (err) {
+            } catch (err: any) {
+                const status = err?.response?.status;
+
+                if (status === 401 || status === 403) {
+                    setError("Mot de passe unique invalide.");
+
+                    setAuditStatus(prev => {
+                        const updated: Record<string, "pending" | "success" | "error"> = { ...prev };
+                        for (const t of orderedTypes) {
+                            updated[t] = "error";
+                        }
+                        return updated;
+                    });
+
+                    setLoading(false);
+                    return;
+                }
+
                 setAuditStatus(prev => ({ ...prev, [type]: "error" }));
-                results[type] = { error: err.response?.data?.message || "Erreur inconnue" };
+                results[type] = { error: err?.response?.data?.message || "Erreur inconnue" };
             }
         }
 
@@ -160,7 +205,10 @@ export default function StartAuditPage() {
                 <MultiSelect
                     label="Types d'audit"
                     placeholder="Choisissez un ou plusieurs types"
-                    data={availableTypes}
+                    data={availableTypes.map((type) => ({
+                        value: type,
+                        label: AuditTypeLabels[type] || type
+                    }))}
                     value={selectedTypes}
                     onChange={setSelectedTypes}
                 />
@@ -170,10 +218,12 @@ export default function StartAuditPage() {
                     value={uniquePassword}
                     onChange={(e) => setUniquePassword(e.currentTarget.value)}
                 />
-                {selectedTypes.map(type => (
-                    <Stack key={type} mt="md">
-                        <Text fw={600}>{type.toUpperCase()}</Text>
-                        {(auditFieldConfig[type] || []).map(field => (
+                {selectedTypes
+                    .filter((type) => (auditFieldConfig[type.toLowerCase()] || []).length > 0)
+                    .map(type => (
+                        <Stack key={type} mt="md">
+                            <Text fw={600}>{AuditTypeLabels[type] || type}</Text>
+                            {(auditFieldConfig[type.toLowerCase()] || []).map(field => (
                             <div key={field.key}>
                                 {field.type === "file" ? (
                                     <>
@@ -215,7 +265,10 @@ export default function StartAuditPage() {
                                         label={field.label}
                                         type={field.type}
                                         defaultValue={field.default}
-                                        value={extraParams[type]?.[field.key] ?? ""}
+                                        value={
+                                            extraParams[type]?.[field.key] ??
+                                            field.default?.toString() ?? ""
+                                        }
                                         onChange={(e) => {
                                             const value = field.type === "number"
                                                 ? Number(e.currentTarget.value)
@@ -255,7 +308,7 @@ export default function StartAuditPage() {
                         <Title order={4}>Progression des audits</Title>
                         {selectedTypes.map(type => (
                             <Group key={type}>
-                                <Text>{type}</Text>
+                                <Text>{AuditTypeLabels[type] || type}</Text>
                                 {auditStatus[type] === "pending" && <Loader size="xs" />}
                                 {auditStatus[type] === "success" && <Text color="green">✅</Text>}
                                 {auditStatus[type] === "error" && <Text color="red">❌</Text>}

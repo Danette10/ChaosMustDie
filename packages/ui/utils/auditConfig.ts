@@ -9,8 +9,8 @@ export const auditFieldConfig: Record<string, { label: string; key: string; type
     sqli: [],
     xss: [],
     bruteforce: [
-        { label: "Chemin du formulaire de login", key: "login_path", type: "text", default: "/login" },
-        { label: "Nom du champ identifiant", key: "username_field", type: "text", default: "username" },
+        { label: "Chemin du formulaire de login", key: "login_path", type: "text", default: "/login.php" },
+        { label: "Nom du champ identifiant", key: "username_field", type: "text", default: "email" },
         { label: "Nom du champ mot de passe", key: "password_field", type: "text", default: "password" },
         { label: "Nom d’utilisateur (optionnel)", key: "username", type: "text" },
         { label: "Wordlist de noms d’utilisateur", key: "username_wordlist", type: "file" },
