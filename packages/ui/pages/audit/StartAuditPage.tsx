@@ -34,18 +34,17 @@ export default function StartAuditPage() {
     const [confirmOpen, setConfirmOpen] = useState(false);
     const [hasReport, setHasReport] = useState(false);
 
-
     if (user?.user_type !== "auditor") {
-        return <Navigate to="/audit" replace/>;
+        return <Navigate to="/audit" replace />;
     }
 
     useEffect(() => {
         axiosInstance
             .get(`/audit/${auditId}/available-types`)
             .then((res) => setAvailableTypes(
-                res.data.types.map((type: string) => type.toUpperCase()) // pour matcher AuditTypeEnum
+                res.data.types.map((type: string) => type.toUpperCase())
             ))
-    .catch(() => setError("Erreur lors du chargement des types d'audit."));
+            .catch(() => setError("Erreur lors du chargement des types d'audit."));
     }, [auditId]);
 
     useEffect(() => {
@@ -65,10 +64,8 @@ export default function StartAuditPage() {
     useEffect(() => {
         setExtraParams((prevParams) => {
             const updatedParams = {...prevParams};
-
             for (const type of selectedTypes) {
                 if (!updatedParams[type]) updatedParams[type] = {};
-
                 for (const field of auditFieldConfig[type.toLowerCase()] || []) {
                     if (
                         updatedParams[type][field.key] === undefined &&
@@ -78,16 +75,14 @@ export default function StartAuditPage() {
                     }
                 }
             }
-
             return updatedParams;
         });
     }, [selectedTypes]);
 
-
     const startAudit = async () => {
         const routeMap: Record<string, string> = {
-            sqli: "/sqli/scan",
-            xss: "/xss/scan",
+            sqli: "/explorer/scan",
+            xss: "/explorer/scan",
             bruteforce: "/bruteforce/scan",
             ddos: "/ddos/scan",
             endpoint_discovery: "/endpoints/scan",
@@ -106,13 +101,52 @@ export default function StartAuditPage() {
         setLoading(true);
 
         const results: Record<string, any> = {};
+        const handled = new Set<string>();
 
         for (const type of orderedTypes) {
+            if (handled.has(type)) continue;
+
             const url = routeMap[type.toLowerCase() as keyof typeof routeMap];
+
+            if ((type === "xss" || type === "sqli") && selectedTypes.includes("xss") && selectedTypes.includes("sqli")) {
+                const payload = {
+                    audit_id: auditId,
+                    unique_password: uniquePassword,
+                    scan_xss: true,
+                    scan_sqli: true,
+                    ...(extraParams["xss"] || {}),
+                    ...(extraParams["sqli"] || {}),
+                };
+
+                try {
+                    const res = await axiosInstance.post(url, payload);
+                    setAuditStatus(prev => ({ ...prev, xss: "success", sqli: "success" }));
+                    results["xss"] = res.data;
+                    results["sqli"] = res.data;
+                } catch (err: any) {
+                    const status = err?.response?.status;
+                    if (status === 401 || status === 403) {
+                        setError("Mot de passe unique invalide.");
+                        setAuditStatus(prev => ({ ...prev, xss: "error", sqli: "error" }));
+                        setLoading(false);
+                        return;
+                    }
+                    setAuditStatus(prev => ({ ...prev, xss: "error", sqli: "error" }));
+                    results["xss"] = { error: err?.response?.data?.message || "Erreur inconnue" };
+                    results["sqli"] = { error: err?.response?.data?.message || "Erreur inconnue" };
+                }
+
+                handled.add("xss");
+                handled.add("sqli");
+                continue;
+            }
+
             const payload = {
                 audit_id: auditId,
                 unique_password: uniquePassword,
-                ...(extraParams[type] || {})
+                ...(extraParams[type] || {}),
+                scan_xss: type === "xss",
+                scan_sqli: type === "sqli",
             };
 
             try {
@@ -121,25 +155,17 @@ export default function StartAuditPage() {
                 results[type] = res.data;
             } catch (err: any) {
                 const status = err?.response?.status;
-
                 if (status === 401 || status === 403) {
                     setError("Mot de passe unique invalide.");
-
-                    setAuditStatus(prev => {
-                        const updated: Record<string, "pending" | "success" | "error"> = { ...prev };
-                        for (const t of orderedTypes) {
-                            updated[t] = "error";
-                        }
-                        return updated;
-                    });
-
+                    setAuditStatus(prev => ({ ...prev, [type]: "error" }));
                     setLoading(false);
                     return;
                 }
-
                 setAuditStatus(prev => ({ ...prev, [type]: "error" }));
                 results[type] = { error: err?.response?.data?.message || "Erreur inconnue" };
             }
+
+            handled.add(type);
         }
 
         try {
@@ -172,16 +198,12 @@ export default function StartAuditPage() {
                                 const response = await axiosInstance.get(`/reports/download/${auditId}`, {
                                     responseType: "blob"
                                 });
-
                                 const blob = new Blob([response.data], { type: "application/pdf" });
                                 const url = window.URL.createObjectURL(blob);
-
                                 window.open(url, "_blank");
-
                                 setTimeout(() => {
                                     window.URL.revokeObjectURL(url);
                                 }, 5000);
-
                             } catch (err) {
                                 console.error("Erreur lors du téléchargement", err);
                             }
@@ -190,7 +212,6 @@ export default function StartAuditPage() {
                     >
                         Télécharger le rapport
                     </Button>
-
                 </Group>
             ) : (
                 <Alert color="blue" mb="lg">
@@ -224,69 +245,67 @@ export default function StartAuditPage() {
                         <Stack key={type} mt="md">
                             <Text fw={600}>{AuditTypeLabels[type] || type}</Text>
                             {(auditFieldConfig[type.toLowerCase()] || []).map(field => (
-                            <div key={field.key}>
-                                {field.type === "file" ? (
-                                    <>
-                                        <FileInput
+                                <div key={field.key}>
+                                    {field.type === "file" ? (
+                                        <>
+                                            <FileInput
+                                                label={field.label}
+                                                accept=".txt"
+                                                placeholder="Sélectionnez un fichier"
+                                                clearable
+                                                onChange={(file) => {
+                                                    if (!file) return;
+                                                    const reader = new FileReader();
+                                                    reader.onload = (event) => {
+                                                        const content = event.target?.result as string;
+                                                        const lines = content
+                                                            .split(/\r?\n/)
+                                                            .map((line) => line.trim())
+                                                            .filter((line) => line.length > 0);
+                                                        setExtraParams((prev) => ({
+                                                            ...prev,
+                                                            [type]: {
+                                                                ...prev[type],
+                                                                [field.key]: lines,
+                                                            },
+                                                        }));
+                                                    };
+                                                    reader.readAsText(file);
+                                                }}
+                                            />
+                                            {Array.isArray(extraParams[type]?.[field.key]) && (
+                                                <Text size="xs" mt={4} c="dimmed">
+                                                    {extraParams[type][field.key].length} lignes chargées
+                                                </Text>
+                                            )}
+                                        </>
+                                    ) : (
+                                        <TextInput
                                             label={field.label}
-                                            accept=".txt"
-                                            placeholder="Sélectionnez un fichier"
-                                            clearable
-                                            onChange={(file) => {
-                                                if (!file) return;
-                                                const reader = new FileReader();
-                                                reader.onload = (event) => {
-                                                    const content = event.target?.result as string;
-                                                    const lines = content
-                                                        .split(/\r?\n/)
-                                                        .map((line) => line.trim())
-                                                        .filter((line) => line.length > 0);
-
-                                                    setExtraParams((prev) => ({
-                                                        ...prev,
-                                                        [type]: {
-                                                            ...prev[type],
-                                                            [field.key]: lines,
-                                                        },
-                                                    }));
-                                                };
-                                                reader.readAsText(file);
+                                            type={field.type}
+                                            defaultValue={field.default}
+                                            value={
+                                                extraParams[type]?.[field.key] ??
+                                                field.default?.toString() ?? ""
+                                            }
+                                            onChange={(e) => {
+                                                const value = field.type === "number"
+                                                    ? Number(e.currentTarget.value)
+                                                    : e.currentTarget.value;
+                                                setExtraParams((prev) => ({
+                                                    ...prev,
+                                                    [type]: {
+                                                        ...prev[type],
+                                                        [field.key]: value
+                                                    }
+                                                }));
                                             }}
                                         />
-
-                                        {Array.isArray(extraParams[type]?.[field.key]) && (
-                                            <Text size="xs" mt={4} c="dimmed">
-                                                {extraParams[type][field.key].length} lignes chargées
-                                            </Text>
-                                        )}
-                                    </>
-                                ) : (
-                                    <TextInput
-                                        label={field.label}
-                                        type={field.type}
-                                        defaultValue={field.default}
-                                        value={
-                                            extraParams[type]?.[field.key] ??
-                                            field.default?.toString() ?? ""
-                                        }
-                                        onChange={(e) => {
-                                            const value = field.type === "number"
-                                                ? Number(e.currentTarget.value)
-                                                : e.currentTarget.value;
-                                            setExtraParams((prev) => ({
-                                                ...prev,
-                                                [type]: {
-                                                    ...prev[type],
-                                                    [field.key]: value
-                                                }
-                                            }));
-                                        }}
-                                    />
-                                )}
-                            </div>
-                        ))}
-                    </Stack>
-                ))}
+                                    )}
+                                </div>
+                            ))}
+                        </Stack>
+                    ))}
 
                 <Button
                     disabled={selectedTypes.length === 0 || !uniquePassword || loading}
@@ -301,7 +320,6 @@ export default function StartAuditPage() {
                 >
                     Démarrer les audits
                 </Button>
-
 
                 {selectedTypes.length > 0 && (
                     <Stack mt="md">
@@ -320,6 +338,7 @@ export default function StartAuditPage() {
                 {error && <Alert color="red">{error}</Alert>}
                 {success && <Alert color="green">{success}</Alert>}
             </Stack>
+
             <ConfirmModal
                 opened={confirmOpen}
                 onClose={() => setConfirmOpen(false)}
@@ -337,7 +356,6 @@ export default function StartAuditPage() {
                     Voulez-vous continuer ?
                 </Text>
             </ConfirmModal>
-
         </Container>
     );
 }
