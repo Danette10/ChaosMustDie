@@ -15,18 +15,8 @@ import {useUser} from "../context/UserContext";
 import {Loader} from "./Loader";
 import {useNavigate} from "react-router-dom";
 import MultiFilter from "./MultiFilter";
-
-const statusLabels: Record<string, string> = {
-    pending: "En attente",
-    in_progress: "En cours",
-    completed: "Terminé",
-};
-
-const statusColors: Record<string, string> = {
-    pending: "yellow",
-    in_progress: "blue",
-    completed: "green",
-};
+import { statusLabels, statusColors } from "../constants/auditStatus";
+import {formatDateTimeFR} from "../utils/dateUtils";
 
 interface AuditListProps {
     limit?: number;
@@ -56,6 +46,7 @@ export function AuditList({ limit, statusFilter }: AuditListProps) {
                     ...(res.data.pending || []),
                     ...(res.data.in_progress || []),
                     ...(res.data.completed || []),
+                    ...(res.data.failed || []),
                 ];
                 setAudits(all);
                 setFiltered(all);
@@ -102,26 +93,40 @@ export function AuditList({ limit, statusFilter }: AuditListProps) {
             )}
 
             <SimpleGrid cols={1} breakpoints={[{ minWidth: 768, cols: 2 }]} spacing="md">
-                {paginated.map((audit) => (
+                {paginated.map((audit) => {
+                    const isAuditor = user?.user_type === "auditor";
+                    const isCompany = user?.user_type === "company";
+                    const clickable =
+                        (isAuditor && audit.status !== "pending") ||
+                        (isCompany && ["completed", "failed"].includes(audit.status));
+                return (
                     <Paper
                         key={audit.id}
                         shadow="sm"
                         p="md"
                         withBorder
-                        style={{ cursor: user?.user_type === "auditor" ? "pointer" : "default" }}
+                        style={{
+                            cursor: clickable ? "pointer" : "default",
+                        }}
                         onClick={() => {
-                            if (user?.user_type === "auditor") {
+                            if (["completed", "failed"].includes(audit.status)) {
+                                navigate(`/audit/view/${audit.id}`);
+                            } else if (isAuditor && audit.status !== "pending") {
                                 navigate(`/audit/start/${audit.id}`);
                             }
                         }}
                         onMouseEnter={(e) => {
-                            if (user?.user_type === "auditor") {
-                                e.currentTarget.style.backgroundColor = isDark ? theme.colors.dark[5] : theme.colors.gray[0];
+                            if (clickable) {
+                                e.currentTarget.style.backgroundColor = isDark
+                                    ? theme.colors.dark[5]
+                                    : theme.colors.gray[0];
                             }
                         }}
                         onMouseLeave={(e) => {
-                            if (user?.user_type === "auditor") {
-                                e.currentTarget.style.backgroundColor = isDark ? theme.colors.dark[7] : theme.white;
+                            if (clickable) {
+                                e.currentTarget.style.backgroundColor = isDark
+                                    ? theme.colors.dark[7]
+                                    : theme.white;
                             }
                         }}
                     >
@@ -134,13 +139,14 @@ export function AuditList({ limit, statusFilter }: AuditListProps) {
                                         : audit.company?.name}
                                 </strong>
                             </Text>
-                            <Text size="sm">Date : {new Date(audit.audit_date).toLocaleDateString("fr-FR")}</Text>
+                            <Text size="sm">Date : {formatDateTimeFR(audit.audit_date)}</Text>
                             <Badge color={statusColors[audit.status] || "gray"}>
                                 {statusLabels[audit.status] || audit.status}
                             </Badge>
                         </Stack>
                     </Paper>
-                ))}
+                );
+                })}
             </SimpleGrid>
 
             {!limit && totalPages > 1 && (

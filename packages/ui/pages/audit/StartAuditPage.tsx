@@ -43,7 +43,7 @@ export default function StartAuditPage() {
         axiosInstance
             .get(`/audit/${auditId}/available-types`)
             .then((res) => setAvailableTypes(
-                res.data.types.map((type: string) => type.toUpperCase()) // pour matcher AuditTypeEnum
+                res.data.types.map((type: string) => type.toUpperCase())
             ))
     .catch(() => setError("Erreur lors du chargement des types d'audit."));
     }, [auditId]);

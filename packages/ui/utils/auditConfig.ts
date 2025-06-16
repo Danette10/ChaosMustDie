@@ -12,7 +12,7 @@ export const auditFieldConfig: Record<string, { label: string; key: string; type
         { label: "Chemin du formulaire de login", key: "login_path", type: "text", default: "/login.php" },
         { label: "Nom du champ identifiant", key: "username_field", type: "text", default: "email" },
         { label: "Nom du champ mot de passe", key: "password_field", type: "text", default: "password" },
-        { label: "Nom d’utilisateur (optionnel)", key: "username", type: "text" },
+        { label: "Nom d’utilisateur (optionnel)", key: "username", type: "text", default: "test@gmail.com" },
         { label: "Wordlist de noms d’utilisateur", key: "username_wordlist", type: "file" },
         { label: "Wordlist de mots de passe", key: "password_wordlist", type: "file" },
         { label: "Nombre de threads", key: "threads", type: "number", default: 10 },

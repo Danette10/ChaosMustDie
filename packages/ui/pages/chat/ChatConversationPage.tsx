@@ -21,6 +21,7 @@ import ConfirmModal from "../../modals/ConfirmModal";
 import {useUser} from "../../context/UserContext";
 import {UserTypeEnum} from "../../enum/UserTypeEnum";
 import EndAuditModal from "../../modals/EndAuditModal";
+import {notifications} from "@mantine/notifications";
 
 export default function ChatConversationPage() {
     const { conversationId } = useParams();
@@ -40,10 +41,8 @@ export default function ChatConversationPage() {
     const [loadingDelete, setLoadingDelete] = useState(false);
     const [auditStatus, setAuditStatus] = useState<string | null>(null);
     const [showFinishModal, setShowFinishModal] = useState(false);
-    const [success, setSuccess] = useState<boolean | null>(null);
-    const [comment, setComment] = useState("");
-    const [reportFile, setReportFile] = useState<File | null>(null);
     const [endAuditLoading, setEndAuditLoading] = useState(false);
+    const [auditId, setAuditId] = useState<string | null>(null);
 
     useEffect(() => {
         if (!conversationId) return;
@@ -52,6 +51,9 @@ export default function ChatConversationPage() {
             .then(res => {
                 setMessages(res.data.messages);
                 setPartner(res.data.partner);
+                if (res.data.audit_id) {
+                    setAuditId(res.data.audit_id);
+                }
             })
             .catch(console.error);
     }, [conversationId]);
@@ -126,7 +128,7 @@ export default function ChatConversationPage() {
             : partner?.company?.id;
 
         if (!auditor_id || !company_id) {
-            console.warn("Impossible d'envoyer la réponse à l'audit : ID manquant");
+            console.warn("Impossible d'envoyer la réponse à l’audit : ID manquant");
             return;
         }
 
@@ -136,7 +138,14 @@ export default function ChatConversationPage() {
         formData.append("action", action);
 
         try {
-            await axiosInstance.patch("/audit/respond", formData);
+            const res = await axiosInstance.patch("/audit/respond", formData);
+
+            if (action === "accept" && res.data?.audit_id && conversationId) {
+                await axiosInstance.patch(`/chat/conversation/${conversationId}/link-audit`, {
+                    audit_id: res.data.audit_id,
+                });
+            }
+
             setAuditStatus(action === "accept" ? "in_progress" : null);
         } catch (err) {
             console.error(`Erreur lors de l’audit ${action}:`, err);
@@ -151,15 +160,32 @@ export default function ChatConversationPage() {
             formData.append("company_id", partner?.company?.id?.toString() || "");
             formData.append("success", data.success.toString());
             formData.append("comment", data.comment);
+            if (!auditId) {
+                console.error("audit_id est manquant !");
+                return;
+            }
+            formData.append("audit_id", auditId);
             if (data.success && data.reportFile) {
-                formData.append("report", data.reportFile);
+                formData.append("file", data.reportFile);
             }
 
             await axiosInstance.post("/audit/finish", formData);
-            setAuditStatus("done");
+
+            notifications.show({
+                title: "Audit terminé",
+                message: "L’audit a été terminé avec succès.",
+                color: "green",
+            });
+
+            setAuditStatus("completed");
             setShowFinishModal(false);
         } catch (err) {
             console.error("Erreur lors de la fin d'audit :", err);
+            notifications.show({
+                title: "Erreur",
+                message: "Impossible de terminer l’audit. Veuillez réessayer.",
+                color: "red",
+            });
         } finally {
             setEndAuditLoading(false);
         }
