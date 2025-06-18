@@ -17,7 +17,7 @@ export default function AllAuditorsPage() {
     const [loading, setLoading] = useState(true);
     const [modalOpen, setModalOpen] = useState(false);
     const [selectedAuditor, setSelectedAuditor] = useState<any>(null);
-
+    const [companyPreferredTypes, setCompanyPreferredTypes] = useState<string[]>([]);
     const itemsPerPage = 10;
 
     useEffect(() => {
@@ -33,14 +33,23 @@ export default function AllAuditorsPage() {
             .then(([auditorsRes, auditsRes]) => {
                 setAuditors(auditorsRes.data);
                 setAuditTypes(auditsRes.data.all);
+                setCompanyPreferredTypes(auditsRes.data.selected); // <- utilisé uniquement pour filtrer les auditeurs
             })
             .catch(console.error)
             .finally(() => setLoading(false));
     }, [user]);
 
-    const filteredAuditors = selectedTypes.length
-        ? auditors.filter((a) => selectedTypes.every((type) => a.audit_types.includes(type)))
-        : auditors;
+    useEffect(() => {
+        setCurrentPage(1);
+    }, [selectedTypes]);
+
+    const filteredAuditors = auditors
+        .filter((a) => a.audit_types.some((type: string) => companyPreferredTypes.includes(type)))
+        .filter((a) =>
+            selectedTypes.length === 0
+                ? true
+                : a.audit_types.some((type: string) => selectedTypes.includes(type))
+        );
 
     const totalPages = Math.ceil(filteredAuditors.length / itemsPerPage);
     const paginatedAuditors = filteredAuditors.slice(
@@ -49,7 +58,7 @@ export default function AllAuditorsPage() {
     );
 
     const auditTypeOptions = Object.fromEntries(
-        auditTypes.map((type) => [type, AuditTypeLabels[type] || type])
+        companyPreferredTypes.map((type) => [type, AuditTypeLabels[type] || type])
     );
 
     if (loading) return <Loader />;
@@ -71,9 +80,22 @@ export default function AllAuditorsPage() {
 
                 <SimpleGrid cols={1} breakpoints={[{ minWidth: 768, cols: 2 }]} spacing="md">
                     {paginatedAuditors.map((auditor) => (
-                        <AuditorCard key={auditor.id} auditor={auditor} onContact={setSelectedAuditor}/>
+                        <AuditorCard
+                            key={auditor.id}
+                            auditor={auditor}
+                            onContact={(auditor) => {
+                                setSelectedAuditor(auditor);
+                                setModalOpen(true);
+                            }}
+                        />
                     ))}
                 </SimpleGrid>
+
+                {paginatedAuditors.length === 0 && (
+                    <Title order={4} align="center" color="dimmed">
+                        Aucun auditeur ne correspond à vos critères.
+                    </Title>
+                )}
 
                 {totalPages > 1 && (
                     <Pagination

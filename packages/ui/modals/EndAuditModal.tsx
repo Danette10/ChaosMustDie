@@ -4,7 +4,7 @@ import { useState } from "react";
 type EndAuditModalProps = {
     opened: boolean;
     onClose: () => void;
-    onSubmit: (data: { success: boolean; comment: string; file: File | null }) => void;
+    onSubmit: (data: { success: boolean; comment: string; reportFile: File }) => void;
     loading?: boolean;
 };
 
@@ -21,7 +21,7 @@ export default function EndAuditModal({ opened, onClose, onSubmit, loading }: En
 
     const handleConfirm = () => {
         if (!isValid) return;
-        onSubmit({ success: !!success, comment, file });
+        onSubmit({ success: !!success, comment, reportFile: file });
     };
 
     return (
