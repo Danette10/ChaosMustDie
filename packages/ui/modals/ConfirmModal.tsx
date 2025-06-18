@@ -1,5 +1,5 @@
-import { Modal, Button, Group, Stack, Title } from "@mantine/core";
-import { ReactNode } from "react";
+import {Button, Group, Modal, Stack} from "@mantine/core";
+import {ReactNode} from "react";
 
 interface ConfirmModalProps {
     opened: boolean;
@@ -23,7 +23,7 @@ export default function ConfirmModal({
                                          loading = false,
                                      }: ConfirmModalProps) {
     return (
-        <Modal opened={opened} onClose={onClose} title={<Title order={4}>{title}</Title>} centered>
+        <Modal opened={opened} onClose={onClose} title={title} centered>
             <Stack>
                 {children}
 

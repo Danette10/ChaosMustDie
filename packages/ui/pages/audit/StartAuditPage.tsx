@@ -3,7 +3,9 @@ import {Navigate, useParams} from "react-router-dom";
 import {
     Alert,
     Button,
-    Container, Divider, FileInput,
+    Container,
+    Divider,
+    FileInput,
     Group,
     Loader,
     MultiSelect,
@@ -108,7 +110,7 @@ export default function StartAuditPage() {
 
             const url = routeMap[type.toLowerCase() as keyof typeof routeMap];
 
-            if ((type === "xss" || type === "sqli") && selectedTypes.includes("xss") && selectedTypes.includes("sqli")) {
+            if ((type === AuditTypeEnum.XSS || type === AuditTypeEnum.SQLI) && selectedTypes.includes(AuditTypeEnum.XSS) && selectedTypes.includes(AuditTypeEnum.SQLI)) {
                 const payload = {
                     audit_id: auditId,
                     unique_password: uniquePassword,
@@ -145,8 +147,8 @@ export default function StartAuditPage() {
                 audit_id: auditId,
                 unique_password: uniquePassword,
                 ...(extraParams[type] || {}),
-                scan_xss: type === "xss",
-                scan_sqli: type === "sqli",
+                scan_xss: type === AuditTypeEnum.XSS,
+                scan_sqli: type === AuditTypeEnum.SQLI,
             };
 
             try {
@@ -283,11 +285,7 @@ export default function StartAuditPage() {
                                         <TextInput
                                             label={field.label}
                                             type={field.type}
-                                            defaultValue={field.default}
-                                            value={
-                                                extraParams[type]?.[field.key] ??
-                                                field.default?.toString() ?? ""
-                                            }
+                                            value={extraParams[type]?.[field.key] ?? field.default?.toString() ?? ""}
                                             onChange={(e) => {
                                                 const value = field.type === "number"
                                                     ? Number(e.currentTarget.value)
@@ -301,6 +299,7 @@ export default function StartAuditPage() {
                                                 }));
                                             }}
                                         />
+
                                     )}
                                 </div>
                             ))}
