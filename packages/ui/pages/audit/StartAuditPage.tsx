@@ -105,12 +105,13 @@ export default function StartAuditPage() {
         const results: Record<string, any> = {};
         const handled = new Set<string>();
 
-        for (const type of orderedTypes) {
-            if (handled.has(type)) continue;
+        // Vérification XSS+SQLI groupé
+        const isBothXssSqli = selectedTypes.includes(AuditTypeEnum.XSS) && selectedTypes.includes(AuditTypeEnum.SQLI);
 
-            const url = routeMap[type.toLowerCase() as keyof typeof routeMap];
-
-            if ((type === AuditTypeEnum.XSS || type === AuditTypeEnum.SQLI) && selectedTypes.includes(AuditTypeEnum.XSS) && selectedTypes.includes(AuditTypeEnum.SQLI)) {
+        try {
+            // Traitement groupé XSS+SQLI
+            if (isBothXssSqli) {
+                const url = routeMap["sqli"];
                 const payload = {
                     audit_id: auditId,
                     unique_password: uniquePassword,
@@ -120,57 +121,35 @@ export default function StartAuditPage() {
                     ...(extraParams["sqli"] || {}),
                 };
 
-                try {
-                    const res = await axiosInstance.post(url, payload);
-                    setAuditStatus(prev => ({ ...prev, xss: "success", sqli: "success" }));
-                    results["xss"] = res.data;
-                    results["sqli"] = res.data;
-                } catch (err: any) {
-                    const status = err?.response?.status;
-                    if (status === 401 || status === 403) {
-                        setError("Mot de passe unique invalide.");
-                        setAuditStatus(prev => ({ ...prev, xss: "error", sqli: "error" }));
-                        setLoading(false);
-                        return;
-                    }
-                    setAuditStatus(prev => ({ ...prev, xss: "error", sqli: "error" }));
-                    results["xss"] = { error: err?.response?.data?.message || "Erreur inconnue" };
-                    results["sqli"] = { error: err?.response?.data?.message || "Erreur inconnue" };
-                }
+                const res = await axiosInstance.post(url, payload);
+
+                results["xss"] = res.data?.xss ?? {findings: []};
+                results["sqli"] = res.data?.sqli ?? {findings: []};
+
+                setAuditStatus(prev => ({...prev, xss: "success", sqli: "success"}));
 
                 handled.add("xss");
                 handled.add("sqli");
-                continue;
             }
 
-            const payload = {
-                audit_id: auditId,
-                unique_password: uniquePassword,
-                ...(extraParams[type] || {}),
-                scan_xss: type === AuditTypeEnum.XSS,
-                scan_sqli: type === AuditTypeEnum.SQLI,
-            };
+            // Traitement des autres types indépendants
+            for (const type of orderedTypes) {
+                if (handled.has(type)) continue;
 
-            try {
+                const url = routeMap[type.toLowerCase() as keyof typeof routeMap];
+                const payload = {
+                    audit_id: auditId,
+                    unique_password: uniquePassword,
+                    ...(extraParams[type] || {}),
+                };
+
                 const res = await axiosInstance.post(url, payload);
-                setAuditStatus(prev => ({ ...prev, [type]: "success" }));
                 results[type] = res.data;
-            } catch (err: any) {
-                const status = err?.response?.status;
-                if (status === 401 || status === 403) {
-                    setError("Mot de passe unique invalide.");
-                    setAuditStatus(prev => ({ ...prev, [type]: "error" }));
-                    setLoading(false);
-                    return;
-                }
-                setAuditStatus(prev => ({ ...prev, [type]: "error" }));
-                results[type] = { error: err?.response?.data?.message || "Erreur inconnue" };
+                setAuditStatus(prev => ({...prev, [type]: "success"}));
+                handled.add(type);
             }
 
-            handled.add(type);
-        }
-
-        try {
+            // Génération du rapport
             await axiosInstance.post("/reports/generate", {
                 audit_id: auditId,
                 results
@@ -182,8 +161,23 @@ export default function StartAuditPage() {
                 setReportUrl(refreshed.data.file_path);
                 setHasReport(true);
             }
-        } catch (e) {
-            setError("Erreur lors de la génération du rapport.");
+        } catch (err: any) {
+            const status = err?.response?.status;
+            if (status === 401 || status === 403) {
+                setError("Mot de passe unique invalide.");
+            } else {
+                setError("Erreur lors de l'exécution des audits.");
+            }
+
+            setAuditStatus(prev => {
+                const updated = {...prev};
+                Object.keys(updated).forEach(type => {
+                    if (updated[type as AuditTypeEnum] === "pending") {
+                        updated[type as AuditTypeEnum] = "error";
+                    }
+                });
+                return updated;
+            });
         }
 
         setLoading(false);

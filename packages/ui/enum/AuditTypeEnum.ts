@@ -1,5 +1,5 @@
 export enum AuditTypeEnum {
-    SQLI = "SQLI",
+    SQLI = "Injection SQL",
     DDOS = "DDOS",
     BRUTEFORCE = "BRUTEFORCE",
     WEB_TECHNOLOGIES = "WEB_TECHNOLOGIES",
