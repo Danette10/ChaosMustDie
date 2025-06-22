@@ -83,11 +83,11 @@ export default function StartAuditPage() {
 
     const startAudit = async () => {
         const routeMap: Record<string, string> = {
-            sqli: "/explorer/scan",
-            xss: "/explorer/scan",
+            sqli: "/sqli/scan",
+            xss: "/xss/scan",
             bruteforce: "/bruteforce/scan",
             ddos: "/ddos/scan",
-            endpoint_discovery: "/explorer/fuzz-endpoints",
+            endpoint_discovery: "/endpoint/scan",
             web_technologies: "/wb/scan",
             http_header_identification: "/headers/scan",
         };
