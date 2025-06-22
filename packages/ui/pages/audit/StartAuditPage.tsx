@@ -87,7 +87,7 @@ export default function StartAuditPage() {
             xss: "/explorer/scan",
             bruteforce: "/bruteforce/scan",
             ddos: "/ddos/scan",
-            endpoint_discovery: "/endpoints/scan",
+            endpoint_discovery: "/explorer/fuzz-endpoints",
             web_technologies: "/wb/scan",
             http_header_identification: "/headers/scan",
         };
