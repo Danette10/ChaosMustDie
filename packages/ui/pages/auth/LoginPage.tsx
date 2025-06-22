@@ -1,8 +1,8 @@
 import { useState } from "react";
 import { useNavigate } from "react-router-dom";
-import { useUser } from "../context/UserContext";
-import { BackButton } from "../components/BackButton";
-import axiosInstance from "../utils/axiosInstance";
+import { useUser } from "../../context/UserContext";
+import { BackButton } from "../../components/BackButton";
+import axiosInstance from "../../utils/axiosInstance";
 import {
   Alert,
   Box,
@@ -30,11 +30,16 @@ export default function LoginPage() {
 
     try {
       const res = await axiosInstance.post("/auth/login", { email, password });
-      const { user, token } = res.data;
 
-      if (!token || !user) throw new Error("Réponse invalide");
+      const { user, access_token } = res.data;
 
-      localStorage.setItem("access_token", token);
+      if (!access_token || !user) {
+        throw new Error("Réponse invalide du serveur");
+      }
+
+      localStorage.setItem("access_token", access_token.replace("Bearer ", ""));
+
+
       setUser(user);
       navigate("/");
     } catch (err: any) {
@@ -43,14 +48,14 @@ export default function LoginPage() {
   };
 
   return (
-      <Center h="100vh" bg="gray.0" px="md">
-        <Paper shadow="md" radius="md" p="xl" w={350} withBorder>
+      <Center h="100vh" px="md">
+        <Paper shadow="md" radius="md" p="xl" style={{ width: "100%" }}>
           <Group justify="space-between" align="center" mb="md">
             <BackButton />
             <Title order={2} ta="center" m={0}>
               Connexion
             </Title>
-            <Box w={32} />
+            <Box/>
           </Group>
 
           {error && (

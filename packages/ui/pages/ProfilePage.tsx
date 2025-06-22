@@ -1,19 +1,11 @@
-import { useUser } from "../context/UserContext";
-import { useEffect, useState } from "react";
+import {useUser} from "../context/UserContext";
+import {useEffect, useState} from "react";
 import axiosInstance from "../utils/axiosInstance";
-import {
-    Box,
-    Button,
-    Checkbox,
-    Container,
-    Paper,
-    Stack,
-    Text,
-    Title,
-    Alert
-} from "@mantine/core";
-import { IconCheck, IconX } from "@tabler/icons-react";
-import { Loader } from "../components/Loader";
+import {Alert, Box, Button, Checkbox, Container, Paper, Stack, Text, Title} from "@mantine/core";
+import {IconCheck, IconX} from "@tabler/icons-react";
+import {Loader} from "../components/Loader";
+import {UserTypeLabel} from "../enum/UserTypeEnum";
+import {AuditTypeEnum, AuditTypeLabels} from "../enum/AuditTypeEnum";
 
 export default function ProfilePage() {
     const { user } = useUser();
@@ -75,7 +67,7 @@ export default function ProfilePage() {
 
     return (
         <Container size="sm" p="md">
-            <Paper withBorder p="lg" radius="md" shadow="sm">
+            <Paper p="lg" radius="md" shadow="sm">
                 <Title order={2} mb="xs">Profil</Title>
                 {error && showAlert && (
                     <Alert color="red" icon={<IconX size={16} />} mb="sm">
@@ -87,22 +79,49 @@ export default function ProfilePage() {
                         {success}
                     </Alert>
                 )}
+                <Box>
+                    <Title order={3} mb="xs" align="center">Informations utilisateur</Title>
+                    <Text mb="xs"><strong>Nom :</strong> {user?.last_name}</Text>
+                    <Text mb="xs"><strong>Prénom :</strong> {user?.first_name}</Text>
+                    <Text mb="xs"><strong>Email :</strong> {user?.email}</Text>
+                    <Text mb="xs"><strong>Type d'utilisateur :</strong> {user && UserTypeLabel[user.user_type]}</Text>
+                    {user?.user_type === "company" && (
+                        <Button
+                            color="red"
+                            onClick={() => {
+                                axiosInstance.post("/auth/reset-unique-password")
+                                    .then(res => {
+                                        setSuccess(res.data.message);
+                                        setError("");
+                                    })
+                                    .catch(err => {
+                                        console.error("Erreur lors de la réinitialisation du mot de passe :", err);
+                                        setError("Échec de la réinitialisation du mot de passe");
+                                        setSuccess("");
+                                    });
+                            }}
+                        >
+                            Réinitialiser le mot de passe unique
+                        </Button>
+                    )}
+                </Box>
 
-                <Title order={4} mt="md" mb="xs">Types d'audit souhaités</Title>
-                <Stack spacing="xs">
-                    {allAudits.map((type) => (
-                        <Checkbox
-                            key={type}
-                            label={type}
-                            checked={selectedAudits.includes(type)}
-                            onChange={() => handleToggle(type)}
-                        />
-                    ))}
-                </Stack>
-
-                <Button fullWidth mt="lg" onClick={handleSave}>
-                    Enregistrer
-                </Button>
+                <Box>
+                    <Title order={3} mt="md" mb="xs" align="center">Types d'audit souhaités</Title>
+                    <Stack spacing="xs">
+                        {allAudits.map((type) => (
+                            <Checkbox
+                                key={type}
+                                label={AuditTypeLabels[type as AuditTypeEnum] || type}
+                                checked={selectedAudits.includes(type)}
+                                onChange={() => handleToggle(type)}
+                            />
+                        ))}
+                    </Stack>
+                    <Button fullWidth mt="lg" onClick={handleSave}>
+                        Enregistrer
+                    </Button>
+                </Box>
             </Paper>
         </Container>
     );

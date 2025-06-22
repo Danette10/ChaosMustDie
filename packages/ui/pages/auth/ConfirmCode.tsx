@@ -13,8 +13,8 @@ import {
     Group
 } from "@mantine/core";
 import { IconCheck, IconX } from "@tabler/icons-react";
-import { BackButton } from "../components/BackButton";
-import axiosInstance from "../utils/axiosInstance";
+import { BackButton } from "../../components/BackButton";
+import axiosInstance from "../../utils/axiosInstance";
 
 export default function ConfirmCode() {
     const [code, setCode] = useState("");
@@ -65,8 +65,8 @@ export default function ConfirmCode() {
             exit={{ opacity: 0, x: -50 }}
             transition={{ duration: 0.3 }}
         >
-            <Center h="100vh" px="md" bg="gray.0">
-                <Paper w={360} withBorder p="lg" radius="md" shadow="sm">
+            <Center h="100vh" px="md">
+                <Paper w={360} p="lg" radius="md" shadow="sm">
                     <Group justify="space-between" align="center" mb="md">
                         <BackButton />
                         <Title order={3} m={0}>
@@ -97,7 +97,7 @@ export default function ConfirmCode() {
                         autoFocus
                         size="lg"
                         mb="md"
-                        disabled={submitting} // 🔐 désactivé pendant loading
+                        disabled={submitting}
                         style={{ display: "flex", justifyContent: "center", gap: 8 }}
                     />
 

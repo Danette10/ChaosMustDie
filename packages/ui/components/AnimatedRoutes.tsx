@@ -1,22 +1,25 @@
-import { lazy, Suspense } from "react";
-import { Routes, Route, useLocation } from "react-router-dom";
-import { AnimatePresence } from "framer-motion";
+import {lazy, Suspense} from "react";
+import {Route, Routes, useLocation} from "react-router-dom";
+import {AnimatePresence} from "framer-motion";
 import PageTransition from "./PageTransition";
-import { AuthGuard } from "./AuthGuard";
+import {AuthGuard} from "./AuthGuard";
 import Layout from "./Layout";
-import { Loader } from "./Loader";
-import { useEnforceConfirmationRedirect } from "../hooks/useEnforceConfirmationRedirect"; // ✅ IMPORT
+import {Loader} from "./Loader";
+import {useEnforceConfirmationRedirect} from "../hooks/useEnforceConfirmationRedirect";
 
 const WelcomePage = lazy(() => import("../pages/WelcomePage"));
-const LoginPage = lazy(() => import("../pages/LoginPage"));
-const RegisterPage = lazy(() => import("../pages/RegisterPage"));
-const ConfirmCode = lazy(() => import("../pages/ConfirmCode"));
+const LoginPage = lazy(() => import("../pages/auth/LoginPage"));
+const RegisterPage = lazy(() => import("../pages/auth/RegisterPage"));
+const ConfirmCode = lazy(() => import("../pages/auth/ConfirmCode"));
 const DashboardPage = lazy(() => import("../pages/DashboardPage"));
 const ProfilePage = lazy(() => import("../pages/ProfilePage"));
+const ChatPage = lazy(() => import("../pages/chat/ChatPage"));
+const AllAuditorsPage = lazy(() => import("../pages/AllAuditorsPage"));
+const AuditPage = lazy(() => import("../pages/audit/AuditPage"));
 
 export default function AnimatedRoutes() {
     const location = useLocation();
-    const ready = useEnforceConfirmationRedirect(); // ✅ UTILISATION DU HOOK
+    const ready = useEnforceConfirmationRedirect();
 
     if (!ready) return <Loader />;
 
@@ -37,6 +40,9 @@ export default function AnimatedRoutes() {
                     >
                         <Route path="/dashboard" element={<PageTransition><DashboardPage /></PageTransition>} />
                         <Route path="/profile" element={<PageTransition><ProfilePage /></PageTransition>} />
+                        <Route path="/chat/*" element={<PageTransition><ChatPage /></PageTransition>} />
+                        <Route path="/auditors" element={<PageTransition><AllAuditorsPage /></PageTransition>} />
+                        <Route path="/audit/*" element={<PageTransition><AuditPage/></PageTransition>}/>
                     </Route>
                 </Routes>
             </Suspense>

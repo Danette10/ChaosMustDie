@@ -16,7 +16,7 @@ export default function  WelcomePage () {
 
     return (
         <PageTransition>
-            <Box h="100vh" bg="gray.0" px="md">
+            <Box h="100vh" px="md">
                 <Center h="100%">
                     <Stack align="center" spacing="md">
                         <Title order={2}>Bienvenue</Title>

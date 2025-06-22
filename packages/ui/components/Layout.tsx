@@ -7,7 +7,7 @@ export default function Layout() {
     const location = useLocation();
 
     return (
-        <div style={{ minHeight: "100vh", backgroundColor: "#f8f9fa" }}>
+        <div style={{ minHeight: "100vh" }}>
             <Navbar />
             <Container py="md">
                 <PageTransition key={location.pathname}>

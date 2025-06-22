@@ -12,7 +12,7 @@ if (!rootElement) throw new Error("Element #root not found");
 
 createRoot(rootElement).render(
     <StrictMode>
-        <MantineProvider>
+        <MantineProvider defaultColorScheme="auto">
             <App />
         </MantineProvider>
     </StrictMode>
