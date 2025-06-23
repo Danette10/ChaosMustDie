@@ -22,6 +22,7 @@ import {useUser} from "../../context/UserContext";
 import {UserTypeEnum} from "../../enum/UserTypeEnum";
 import EndAuditModal from "../../modals/EndAuditModal";
 import {notifications} from "@mantine/notifications";
+import {useChatSocket} from "../../hooks/useChatSocket";
 
 export default function ChatConversationPage() {
     const { conversationId } = useParams();
@@ -29,6 +30,7 @@ export default function ChatConversationPage() {
     const theme = useMantineTheme();
     const colorScheme = useComputedColorScheme();
     const isDark = colorScheme === "dark";
+    const socketRef = useChatSocket();
 
     const scrollRef = useRef<HTMLDivElement>(null);
     const [messages, setMessages] = useState([]);
@@ -44,6 +46,7 @@ export default function ChatConversationPage() {
     const [endAuditLoading, setEndAuditLoading] = useState(false);
     const [auditId, setAuditId] = useState<string | null>(null);
 
+    // Chargement initial des messages
     useEffect(() => {
         if (!conversationId) return;
 
@@ -58,18 +61,40 @@ export default function ChatConversationPage() {
             .catch(console.error);
     }, [conversationId]);
 
+    // WebSocket temps réel
     useEffect(() => {
-        const hideContextMenu = () => setContextMenu({ x: 0, y: 0, id: null });
-        window.addEventListener("click", hideContextMenu);
-        return () => window.removeEventListener("click", hideContextMenu);
-    }, []);
+        if (!conversationId || !socketRef.current) return;
 
+        socketRef.current.emit("join_conversation", {conversation_id: conversationId});
+
+        const handleNewMessage = (message: any) => {
+            if (parseInt(conversationId) === message.conversation_id) {
+                setMessages(prev => [...prev, {
+                    id: message.id ?? Date.now(),
+                    from: message.sender_id === user?.id ? "me" : "other",
+                    content: message.content,
+                    timestamp: message.timestamp
+                }]);
+            }
+        };
+
+        socketRef.current.on("new_message", handleNewMessage);
+
+        return () => {
+            socketRef.current?.off("new_message", handleNewMessage);
+        };
+    }, [conversationId, user]);
+
+    // Auto scroll à chaque nouveau message
+    useEffect(() => {
+        scrollRef.current?.scrollIntoView({behavior: 'smooth', block: 'end'});
+    }, [messages]);
+
+    // Gestion Audit Status
     useEffect(() => {
         if (!partner || !user) return;
 
         const fetchAuditStatus = async () => {
-            if (!partner || !user) return;
-
             const auditor_id = user.user_type === UserTypeEnum.AUDITOR ? user.id : partner.id;
             const company_id = user.user_type === UserTypeEnum.COMPANY
                 ? user.company?.id
@@ -90,10 +115,10 @@ export default function ChatConversationPage() {
             }
         };
 
-
         fetchAuditStatus();
     }, [partner, user]);
 
+    // Envoi de message
     const sendMessage = async () => {
         if (!input.trim()) return;
         try {
@@ -105,6 +130,7 @@ export default function ChatConversationPage() {
         }
     };
 
+    // Suppression de message
     const deleteMessage = async () => {
         if (confirmDeleteId === null) return;
         setLoadingDelete(true);
@@ -119,6 +145,7 @@ export default function ChatConversationPage() {
         }
     };
 
+    // Gestion réponse Audit
     const handleAuditResponse = async (action: "accept" | "refuse") => {
         if (!user || !partner) return;
 
@@ -152,6 +179,7 @@ export default function ChatConversationPage() {
         }
     };
 
+    // Terminer l'audit
     const handleAuditEnd = async (data: { success: boolean; comment: string; reportFile?: File }) => {
         setEndAuditLoading(true);
         try {
@@ -240,7 +268,6 @@ export default function ChatConversationPage() {
                             )
                         )}
 
-
                         {user?.user_type === UserTypeEnum.AUDITOR && auditStatus === "pending" && (
                             <Group spacing={4}>
                                 <Button size="xs" color="green" variant="light" onClick={() => handleAuditResponse("accept")}>
@@ -263,7 +290,7 @@ export default function ChatConversationPage() {
                 </Group>
 
                 <Paper shadow="xs" p="sm" withBorder style={{ height: 400, display: "flex", flexDirection: "column" }}>
-                    <ScrollArea style={{ flex: 1 }} viewportRef={scrollRef}>
+                    <ScrollArea style={{flex: 1}}>
                         <Stack>
                             {messages.map(msg => (
                                 <Box
@@ -296,38 +323,9 @@ export default function ChatConversationPage() {
                                     </Box>
                                 </Box>
                             ))}
+                            <div ref={scrollRef}/>
+                            {/* Pour auto scroll */}
                         </Stack>
-
-                        {contextMenu.id !== null && (
-                            <Box
-                                style={{
-                                    position: "fixed",
-                                    top: contextMenu.y,
-                                    left: contextMenu.x,
-                                    zIndex: 9999,
-                                    backgroundColor: isDark ? theme.colors.dark[6] : theme.white,
-                                    boxShadow: "0 2px 12px rgba(0,0,0,0.2)",
-                                    borderRadius: 8,
-                                    padding: "6px 10px",
-                                    minWidth: 120,
-                                    border: `1px solid ${isDark ? theme.colors.dark[4] : theme.colors.gray[3]}`,
-                                }}
-                                onClick={(e) => e.stopPropagation()}
-                            >
-                                <Button
-                                    size="xs"
-                                    color="red"
-                                    variant="light"
-                                    fullWidth
-                                    onClick={() => {
-                                        setContextMenu({ x: 0, y: 0, id: null });
-                                        setConfirmDeleteId(contextMenu.id!);
-                                    }}
-                                >
-                                    Supprimer
-                                </Button>
-                            </Box>
-                        )}
                     </ScrollArea>
 
                     <Group mt="xs" grow>
@@ -369,7 +367,6 @@ export default function ChatConversationPage() {
                 onSubmit={handleAuditEnd}
                 loading={endAuditLoading}
             />
-
         </PageTransition>
     );
 }
