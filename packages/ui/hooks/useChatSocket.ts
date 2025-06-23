@@ -9,11 +9,10 @@ export function useChatSocket() {
     useEffect(() => {
         if (!token) return;
 
-        const socket = io("wss://ton-domaine.com:5000", {
-            query: {token: token},
-            transports: ['websocket'],
-            secure: true,
+        const socket = io("wss://127.0.0.1:5000", {
+            auth: { token: token }
         });
+
 
         socketRef.current = socket;
 

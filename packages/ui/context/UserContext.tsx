@@ -21,6 +21,7 @@ type User = {
 
 type UserContextType = {
   user: User | null;
+  token: string | null;
   loading: boolean;
   refreshUser: () => Promise<void>;
   forceRefreshUser: () => Promise<void>;
@@ -29,6 +30,7 @@ type UserContextType = {
 
 const UserContext = createContext<UserContextType>({
   user: null,
+  token: null,
   loading: true,
   forceRefreshUser(): Promise<void> {
     return Promise.resolve(undefined);
@@ -43,6 +45,7 @@ export function UserProvider({ children }: { children: React.ReactNode }) {
   const [user, setUser] = useState<User | null>(null);
   const [loading, setLoading] = useState(true);
   const hasFetched = useRef(false);
+  const localToken = localStorage.getItem("access_token");
 
   const fetchUser = async () => {
     if (hasFetched.current) return;
@@ -96,7 +99,7 @@ export function UserProvider({ children }: { children: React.ReactNode }) {
 
   return (
       <UserContext.Provider
-          value={{ user, loading, refreshUser: fetchUser, forceRefreshUser, setUser }}
+          value={{ user, token: localToken, loading, refreshUser: fetchUser, forceRefreshUser, setUser }}
       >
         {children}
       </UserContext.Provider>
