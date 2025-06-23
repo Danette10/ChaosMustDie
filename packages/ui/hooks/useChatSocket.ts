@@ -9,7 +9,7 @@ export function useChatSocket() {
     useEffect(() => {
         if (!token) return;
 
-        const socket = io("wss://127.0.0.1:5000", {
+        const socket = io("wss://localhost", {
             auth: { token: token }
         });
 

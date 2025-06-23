@@ -9,7 +9,7 @@
     "downloads"
   ],
   "host_permissions": [
-    "https://127.0.0.1:5000/api/v1/*"
+    "https://localhost/api/v1/*"
   ],
   "icons": {
     "16": "icon.png",

@@ -1,7 +1,7 @@
 import {useUser} from "../context/UserContext";
 import {useEffect, useState} from "react";
 import axiosInstance from "../utils/axiosInstance";
-import {Alert, Box, Button, Checkbox, Container, Paper, Stack, Text, Title} from "@mantine/core";
+import {Alert, Box, Button, Checkbox, Container, Modal, Paper, PasswordInput, Stack, Text, Title} from "@mantine/core";
 import {IconCheck, IconX} from "@tabler/icons-react";
 import {Loader} from "../components/Loader";
 import {UserTypeLabel} from "../enum/UserTypeEnum";
@@ -15,6 +15,11 @@ export default function ProfilePage() {
     const [error, setError] = useState("");
     const [showAlert, setShowAlert] = useState(true);
     const [loading, setLoading] = useState(true);
+
+    const [changePasswordModalOpen, setChangePasswordModalOpen] = useState(false);
+    const [oldPassword, setOldPassword] = useState("");
+    const [newPassword, setNewPassword] = useState("");
+    const [changePasswordError, setChangePasswordError] = useState("");
 
     useEffect(() => {
         axiosInstance
@@ -55,6 +60,29 @@ export default function ProfilePage() {
             });
     };
 
+    const handleChangePassword = () => {
+        axiosInstance.post("/auth/change-password", {
+            old_password: oldPassword,
+            new_password: newPassword
+        })
+            .then(() => {
+                setSuccess("Mot de passe changé avec succès");
+                setError("");
+                setChangePasswordModalOpen(false);
+                setOldPassword("");
+                setNewPassword("");
+                setChangePasswordError("");
+            })
+            .catch((err) => {
+                console.error("Erreur lors du changement de mot de passe :", err);
+                if (err.response?.status === 401) {
+                    setChangePasswordError("L'ancien mot de passe est incorrect.");
+                } else {
+                    setChangePasswordError("Erreur lors du changement de mot de passe.");
+                }
+            });
+    };
+
     useEffect(() => {
         if (success || error) {
             setShowAlert(true);
@@ -85,25 +113,33 @@ export default function ProfilePage() {
                     <Text mb="xs"><strong>Prénom :</strong> {user?.first_name}</Text>
                     <Text mb="xs"><strong>Email :</strong> {user?.email}</Text>
                     <Text mb="xs"><strong>Type d'utilisateur :</strong> {user && UserTypeLabel[user.user_type]}</Text>
-                    {user?.user_type === "company" && (
-                        <Button
-                            color="red"
-                            onClick={() => {
-                                axiosInstance.post("/auth/reset-unique-password")
-                                    .then(res => {
-                                        setSuccess(res.data.message);
-                                        setError("");
-                                    })
-                                    .catch(err => {
-                                        console.error("Erreur lors de la réinitialisation du mot de passe :", err);
-                                        setError("Échec de la réinitialisation du mot de passe");
-                                        setSuccess("");
-                                    });
-                            }}
-                        >
-                            Réinitialiser le mot de passe unique
+                    <Stack mt="md">
+                        <Button onClick={() => {
+                            setChangePasswordModalOpen(true);
+                            setChangePasswordError("");
+                            setOldPassword("");
+                            setNewPassword("");
+                        }}>
+                            Changer le mot de passe
                         </Button>
-                    )}
+                        {user?.user_type === "company" && (
+                            <Button color="red"
+                                    onClick={() => {
+                                        axiosInstance.post("/auth/reset-unique-password")
+                                            .then(res => {
+                                                setSuccess(res.data.message);
+                                                setError("");
+                                            })
+                                            .catch(err => {
+                                                console.error("Erreur lors de la réinitialisation du mot de passe :", err);
+                                                setError("Échec de la réinitialisation du mot de passe");
+                                                setSuccess("");
+                                            });
+                                    }}>
+                                Réinitialiser le mot de passe unique
+                            </Button>
+                        )}
+                    </Stack>
                 </Box>
 
                 <Box>
@@ -123,6 +159,32 @@ export default function ProfilePage() {
                     </Button>
                 </Box>
             </Paper>
+
+            <Modal
+                opened={changePasswordModalOpen}
+                onClose={() => setChangePasswordModalOpen(false)}
+                title="Changer le mot de passe"
+                centered
+            >
+                <Stack>
+                    <PasswordInput
+                        label="Ancien mot de passe"
+                        value={oldPassword}
+                        onChange={(e) => setOldPassword(e.currentTarget.value)}
+                    />
+                    <PasswordInput
+                        label="Nouveau mot de passe"
+                        value={newPassword}
+                        onChange={(e) => setNewPassword(e.currentTarget.value)}
+                    />
+                    {changePasswordError && (
+                        <Alert color="red" icon={<IconX size={16} />} mb="sm">
+                            {changePasswordError}
+                        </Alert>
+                    )}
+                    <Button onClick={handleChangePassword}>Valider</Button>
+                </Stack>
+            </Modal>
         </Container>
     );
 };

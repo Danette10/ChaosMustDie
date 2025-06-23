@@ -1,5 +1,5 @@
 import { useState } from "react";
-import { useNavigate } from "react-router-dom";
+import { useNavigate, Link } from "react-router-dom";
 import { useUser } from "../../context/UserContext";
 import { BackButton } from "../../components/BackButton";
 import axiosInstance from "../../utils/axiosInstance";
@@ -12,6 +12,7 @@ import {
   Paper,
   PasswordInput,
   Stack,
+  Text,
   TextInput,
   Title
 } from "@mantine/core";
@@ -38,7 +39,6 @@ export default function LoginPage() {
       }
 
       localStorage.setItem("access_token", access_token.replace("Bearer ", ""));
-
 
       setUser(user);
       navigate("/");
@@ -86,6 +86,10 @@ export default function LoginPage() {
               <Button type="submit" fullWidth>
                 Se connecter
               </Button>
+
+              <Text size="sm" ta="center" mt="sm">
+                <Link to="/forgot-password">Mot de passe oublié ?</Link>
+              </Text>
             </Stack>
           </form>
         </Paper>
