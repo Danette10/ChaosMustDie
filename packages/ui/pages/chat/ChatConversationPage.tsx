@@ -122,8 +122,7 @@ export default function ChatConversationPage() {
     const sendMessage = async () => {
         if (!input.trim()) return;
         try {
-            const res = await axiosInstance.post(`/chat/messages/${conversationId}`, { content: input });
-            setMessages(prev => [...prev, res.data]);
+            await axiosInstance.post(`/chat/messages/${conversationId}`, { content: input });
             setInput("");
         } catch (err) {
             console.error(err);
