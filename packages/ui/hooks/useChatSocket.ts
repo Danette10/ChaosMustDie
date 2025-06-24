@@ -10,6 +10,7 @@ export function useChatSocket() {
         if (!token) return;
 
         const socket = io("wss://localhost", {
+            transports: ["websocket"],
             auth: { token: token }
         });
 
