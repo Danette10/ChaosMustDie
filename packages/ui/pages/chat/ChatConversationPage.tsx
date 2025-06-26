@@ -133,20 +133,28 @@ export default function ChatConversationPage() {
                         data={messages}
                         followOutput={(isAtBottom) => isAtBottom ? 'smooth' : false}
                         itemContent={(index, msg) => (
-                            <Box key={msg.id} style={{
-                                display: "flex",
-                                justifyContent: msg.from === "me" ? "flex-end" : "flex-start"
-                            }}>
-                                <Box p="sm"
-                                     bg={msg.from === "me" ? (isDark ? "blue.9" : "blue.0") : (isDark ? theme.colors.dark[5] : theme.colors.gray[1])}
-                                     maw={300} style={{borderRadius: 16, minWidth: "15rem"}}>
-                                    <Text style={{wordBreak: "break-word"}}>{msg.content}</Text>
-                                    <Text size="sm" style={{alignSelf: "flex-end", marginTop: 4}}>
-                                        <em>{formatTimestamp(msg.timestamp)}</em>
-                                    </Text>
+                            <Box key={msg.id} px="xs" py={4}> {/* Espacement ici */}
+                                <Box
+                                    style={{
+                                        display: "flex",
+                                        justifyContent: msg.from === "me" ? "flex-end" : "flex-start"
+                                    }}
+                                >
+                                    <Box
+                                        p="sm"
+                                        bg={msg.from === "me" ? (isDark ? "blue.9" : "blue.0") : (isDark ? theme.colors.dark[5] : theme.colors.gray[1])}
+                                        maw={300}
+                                        style={{borderRadius: 16, minWidth: "15rem"}}
+                                    >
+                                        <Text style={{wordBreak: "break-word"}}>{msg.content}</Text>
+                                        <Text size="sm" style={{alignSelf: "flex-end", marginTop: 4}}>
+                                            <em>{formatTimestamp(msg.timestamp)}</em>
+                                        </Text>
+                                    </Box>
                                 </Box>
                             </Box>
                         )}
+
                     />
 
                     <Group mt="xs" grow>

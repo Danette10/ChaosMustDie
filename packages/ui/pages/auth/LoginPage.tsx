@@ -1,21 +1,9 @@
-import { useState } from "react";
-import { useNavigate, Link } from "react-router-dom";
-import { useUser } from "../../context/UserContext";
-import { BackButton } from "../../components/BackButton";
+import {useState} from "react";
+import {Link, useNavigate} from "react-router-dom";
+import {useUser} from "../../context/UserContext";
+import {BackButton} from "../../components/BackButton";
 import axiosInstance from "../../utils/axiosInstance";
-import {
-  Alert,
-  Box,
-  Button,
-  Center,
-  Group,
-  Paper,
-  PasswordInput,
-  Stack,
-  Text,
-  TextInput,
-  Title
-} from "@mantine/core";
+import {Alert, Box, Button, Center, Group, Paper, PasswordInput, Stack, Text, TextInput, Title} from "@mantine/core";
 
 export default function LoginPage() {
   const { setUser } = useUser();
@@ -38,7 +26,9 @@ export default function LoginPage() {
         throw new Error("Réponse invalide du serveur");
       }
 
-      localStorage.setItem("access_token", access_token.replace("Bearer ", ""));
+      const token = access_token.replace("Bearer ", "");
+      localStorage.setItem("access_token", token);
+      localStorage.setItem("token_expiry", (Date.now() + 12 * 60 * 60 * 1000).toString()); // 12h
 
       setUser(user);
       navigate("/");

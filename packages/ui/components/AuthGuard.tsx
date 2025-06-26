@@ -1,7 +1,7 @@
-import { useUser } from "../context/UserContext";
-import { useEffect } from "react";
-import { useNavigate } from "react-router-dom";
-import { Center, Loader, Text } from "@mantine/core";
+import {useUser} from "../context/UserContext";
+import {useEffect} from "react";
+import {useNavigate} from "react-router-dom";
+import {Center, Loader, Text} from "@mantine/core";
 
 export const AuthGuard = ({ children }: { children: React.ReactNode }) => {
   const { user, loading } = useUser();
@@ -9,13 +9,25 @@ export const AuthGuard = ({ children }: { children: React.ReactNode }) => {
 
   useEffect(() => {
     if (!loading && !user) {
-      navigate("/");
+      navigate("/login");
     }
   }, [loading, user, navigate]);
 
-  if (loading) return <Loader />;
+  if (loading) {
+    return (
+        <Center h="100vh">
+          <Loader/>
+        </Center>
+    );
+  }
 
-  if (!user) return null;
+  if (!user) {
+    return (
+        <Center h="100vh">
+          <Text>Redirection vers la page de connexion...</Text>
+        </Center>
+    );
+  }
 
   return <>{children}</>;
 };

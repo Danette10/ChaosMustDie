@@ -1,6 +1,7 @@
 import {createContext, useContext, useEffect, useRef, useState} from "react";
 import axiosInstance from "../utils/axiosInstance";
 import {UserTypeEnum} from "../enum/UserTypeEnum";
+import {useNavigate} from "react-router-dom";
 
 type User = {
   id: number;
@@ -41,7 +42,14 @@ const UserContext = createContext<UserContextType>({
 
 export const useUser = () => useContext(UserContext);
 
+const isTokenExpired = (): boolean => {
+  const expiry = localStorage.getItem("token_expiry");
+  if (!expiry) return true;
+  return Date.now() > parseInt(expiry);
+};
+
 export function UserProvider({ children }: { children: React.ReactNode }) {
+  const navigate = useNavigate();
   const [user, setUser] = useState<User | null>(null);
   const [loading, setLoading] = useState(true);
   const hasFetched = useRef(false);
@@ -52,9 +60,12 @@ export function UserProvider({ children }: { children: React.ReactNode }) {
     hasFetched.current = true;
 
     const token = localStorage.getItem("access_token");
-    if (!token) {
+    if (!token || isTokenExpired()) {
+      localStorage.removeItem("access_token");
+      localStorage.removeItem("token_expiry");
       setUser(null);
       setLoading(false);
+      navigate("/login");
       return;
     }
 
@@ -81,9 +92,12 @@ export function UserProvider({ children }: { children: React.ReactNode }) {
 
   const forceRefreshUser = async () => {
     const token = localStorage.getItem("access_token");
-    if (!token) {
+    if (!token || isTokenExpired()) {
+      localStorage.removeItem("access_token");
+      localStorage.removeItem("token_expiry");
       setUser(null);
       setLoading(false);
+      navigate("/login");
       return;
     }
 
