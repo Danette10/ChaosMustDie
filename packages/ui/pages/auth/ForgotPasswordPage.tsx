@@ -1,19 +1,8 @@
-import { useState } from "react";
-import { useNavigate } from "react-router-dom";
+import {useState} from "react";
+import {useNavigate} from "react-router-dom";
 import axiosInstance from "../../utils/axiosInstance";
-import {
-    Alert,
-    Box,
-    Button,
-    Center,
-    Group,
-    Paper,
-    Stack,
-    TextInput,
-    Title,
-    Text
-} from "@mantine/core";
-import { BackButton } from "../../components/BackButton";
+import {Alert, Box, Button, Center, Group, Paper, Stack, TextInput, Title} from "@mantine/core";
+import {BackButton} from "../../components/BackButton";
 
 export default function ForgotPasswordPage() {
     const [email, setEmail] = useState("");
@@ -27,7 +16,7 @@ export default function ForgotPasswordPage() {
         setError("");
 
         try {
-            await axiosInstance.post("/auth/forgot-password", { email });
+            await axiosInstance.post("/auth/forgot-password", {email});
             setSuccess("Si cet email existe, un lien de réinitialisation a été envoyé.");
         } catch (err: any) {
             console.error(err);
@@ -37,13 +26,13 @@ export default function ForgotPasswordPage() {
 
     return (
         <Center h="100vh" px="md">
-            <Paper shadow="md" radius="md" p="xl" style={{ width: "100%" }}>
+            <Paper shadow="md" radius="md" p="xl" style={{width: "100%"}}>
                 <Group justify="space-between" align="center" mb="md">
-                    <BackButton />
+                    <BackButton/>
                     <Title order={2} ta="center" m={0}>
                         Mot de passe oublié
                     </Title>
-                    <Box />
+                    <Box/>
                 </Group>
 
                 {success && (

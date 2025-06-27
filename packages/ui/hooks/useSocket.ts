@@ -10,7 +10,7 @@ export function useSocket() {
         if (!token) return;
 
         const socket = io("wss://localhost", {
-            auth: { token: token }
+            auth: {token: token}
         });
 
 

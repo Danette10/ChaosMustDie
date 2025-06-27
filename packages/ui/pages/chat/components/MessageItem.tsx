@@ -70,7 +70,7 @@ export const MessageItem = ({
                             color: msg.deleted ? theme.colors.gray[6] : undefined,
                         }}
                     >
-                        {msg.content}
+                        {msg.deleted && !msg.content ? "Message supprimé" : msg.content}
                     </Text>
                     <Text size="sm" mt={4}>
                         <em>

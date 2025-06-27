@@ -1,5 +1,5 @@
-import { Modal, Button, Textarea, Radio, FileInput, Stack, Text, Group } from "@mantine/core";
-import { useState } from "react";
+import {Button, FileInput, Group, Modal, Radio, Stack, Textarea} from "@mantine/core";
+import {useState} from "react";
 
 type EndAuditModalProps = {
     opened: boolean;
@@ -8,7 +8,7 @@ type EndAuditModalProps = {
     loading?: boolean;
 };
 
-export default function EndAuditModal({ opened, onClose, onSubmit, loading }: EndAuditModalProps) {
+export default function EndAuditModal({opened, onClose, onSubmit, loading}: EndAuditModalProps) {
     const [success, setSuccess] = useState<boolean | null>(null);
     const [comment, setComment] = useState("");
     const [file, setFile] = useState<File | null>(null);
@@ -21,7 +21,7 @@ export default function EndAuditModal({ opened, onClose, onSubmit, loading }: En
 
     const handleConfirm = () => {
         if (!isValid) return;
-        onSubmit({ success: !!success, comment, reportFile: file });
+        onSubmit({success: !!success, comment, reportFile: file});
     };
 
     return (
@@ -33,8 +33,8 @@ export default function EndAuditModal({ opened, onClose, onSubmit, loading }: En
                     onChange={(val) => setSuccess(val === "success")}
                 >
                     <Group mt="xs" mb="xs">
-                        <Radio value="success" label="Audit réussi" />
-                        <Radio value="fail" label="Audit échoué" />
+                        <Radio value="success" label="Audit réussi"/>
+                        <Radio value="fail" label="Audit échoué"/>
                     </Group>
                 </Radio.Group>
 

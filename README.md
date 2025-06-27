@@ -6,14 +6,15 @@
 
 - [Introduction](#introduction)
 - [Installation](#installation)
-  - [Environment Setup](#environment-setup)
-  - [Generate Local Certificates (HTTPS)](#generate-local-certificates-https)
-  - [Run Frontend](#run-frontend)
-  - [Build extension](#build-extension)
+    - [Environment Setup](#environment-setup)
+    - [Generate Local Certificates (HTTPS)](#generate-local-certificates-https)
+    - [Run Frontend](#run-frontend)
+    - [Build extension](#build-extension)
 
 ## Introduction
 
-The frontend is built with React (Vite + Mantine + Typescript). It communicates with the backend API via HTTPS and WebSockets.
+The frontend is built with React (Vite + Mantine + Typescript). It communicates with the backend API via HTTPS and
+WebSockets.
 
 ## Installation
 

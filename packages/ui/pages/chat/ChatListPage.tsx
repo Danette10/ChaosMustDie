@@ -45,11 +45,11 @@ export default function ChatListPage() {
         if (!socketRef.current) return;
 
         const handleTyping = (data: any) => {
-            setTypingMap(prev => ({ ...prev, [data.conversation_id]: true }));
+            setTypingMap(prev => ({...prev, [data.conversation_id]: true}));
         };
 
         const handleStopTyping = (data: any) => {
-            setTypingMap(prev => ({ ...prev, [data.conversation_id]: false }));
+            setTypingMap(prev => ({...prev, [data.conversation_id]: false}));
         };
 
         const handleMessageDeleted = (data: any) => {
@@ -81,7 +81,7 @@ export default function ChatListPage() {
                 }
                 return conv;
             }));
-            setTypingMap(prev => ({ ...prev, [data.conversation_id]: false }));
+            setTypingMap(prev => ({...prev, [data.conversation_id]: false}));
         };
 
         const handleMessageRead = (data: any) => {
@@ -122,7 +122,7 @@ export default function ChatListPage() {
                 <Title order={3} mb="md">Mes conversations</Title>
                 <Paper p="sm" shadow="xs" withBorder>
                     {loading ? (
-                        <Loader />
+                        <Loader/>
                     ) : (
                         <Stack spacing="xs">
                             {conversations.map((conv: any) => (
@@ -152,7 +152,8 @@ export default function ChatListPage() {
                                     }
                                 >
                                     <Stack spacing={4}>
-                                        <Group position="apart" style={{ justifyContent: "space-between", alignItems: "center" }}>
+                                        <Group position="apart"
+                                               style={{justifyContent: "space-between", alignItems: "center"}}>
                                             <Text fw={500}>{conv.name}</Text>
                                             <Text size="sm">
                                                 <em>
@@ -178,8 +179,8 @@ export default function ChatListPage() {
                                                         {[0, 1, 2].map((i) => (
                                                             <motion.span
                                                                 key={i}
-                                                                style={{ fontSize: "20px", fontWeight: 500 }}
-                                                                animate={{ opacity: [0.2, 1, 0.2] }}
+                                                                style={{fontSize: "20px", fontWeight: 500}}
+                                                                animate={{opacity: [0.2, 1, 0.2]}}
                                                                 transition={{
                                                                     repeat: Infinity,
                                                                     duration: 1.5,

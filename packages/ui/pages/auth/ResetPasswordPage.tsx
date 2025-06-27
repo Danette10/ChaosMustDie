@@ -1,18 +1,8 @@
-import { useState } from "react";
-import { useNavigate, useSearchParams } from "react-router-dom";
+import {useState} from "react";
+import {useNavigate, useSearchParams} from "react-router-dom";
 import axiosInstance from "../../utils/axiosInstance";
-import {
-    Alert,
-    Box,
-    Button,
-    Center,
-    Group,
-    Paper,
-    PasswordInput,
-    Stack,
-    Title
-} from "@mantine/core";
-import { BackButton } from "../../components/BackButton";
+import {Alert, Box, Button, Center, Group, Paper, PasswordInput, Stack, Title} from "@mantine/core";
+import {BackButton} from "../../components/BackButton";
 
 export default function ResetPasswordPage() {
     const [searchParams] = useSearchParams();
@@ -58,13 +48,13 @@ export default function ResetPasswordPage() {
 
     return (
         <Center h="100vh" px="md">
-            <Paper shadow="md" radius="md" p="xl" style={{ width: "100%" }}>
+            <Paper shadow="md" radius="md" p="xl" style={{width: "100%"}}>
                 <Group justify="space-between" align="center" mb="md">
-                    <BackButton />
+                    <BackButton/>
                     <Title order={2} ta="center" m={0}>
                         Réinitialiser le mot de passe
                     </Title>
-                    <Box />
+                    <Box/>
                 </Group>
 
                 {success && (

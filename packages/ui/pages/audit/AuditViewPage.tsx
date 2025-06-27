@@ -10,16 +10,16 @@ import {
     useComputedColorScheme,
     useMantineTheme,
 } from "@mantine/core";
-import { useParams } from "react-router-dom";
-import { useEffect, useState } from "react";
+import {useParams} from "react-router-dom";
+import {useEffect, useState} from "react";
 import axiosInstance from "../../utils/axiosInstance";
-import { useUser } from "../../context/UserContext";
-import { statusLabels, statusColors } from "../../constants/auditStatus";
+import {useUser} from "../../context/UserContext";
+import {statusColors, statusLabels} from "../../constants/auditStatus";
 import {formatDateTimeFR} from "../../utils/dateUtils";
 
 export function AuditViewPage() {
-    const { id } = useParams();
-    const { user } = useUser();
+    const {id} = useParams();
+    const {user} = useUser();
     const [audit, setAudit] = useState<any | null>(null);
     const [loading, setLoading] = useState(true);
     const theme = useMantineTheme();
@@ -34,7 +34,7 @@ export function AuditViewPage() {
             .finally(() => setLoading(false));
     }, [id]);
 
-    if (loading) return <Loader />;
+    if (loading) return <Loader/>;
     if (!audit) return <Text color="red">Audit introuvable</Text>;
 
     const isAuditor = user?.user_type === "auditor";
@@ -69,7 +69,7 @@ export function AuditViewPage() {
 
                     <Text>
                         <strong>Commentaire de l’auditeur :</strong>
-                        <br />
+                        <br/>
                         {audit.comment || <em>Aucun commentaire fourni.</em>}
                     </Text>
 

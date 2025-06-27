@@ -5,11 +5,11 @@ import {ActionIcon, Button, Group, Paper, useComputedColorScheme, useMantineColo
 import {IconMoon, IconSun} from "@tabler/icons-react";
 
 export const Navbar = () => {
-    const { user, setUser } = useUser();
+    const {user, setUser} = useUser();
     const navigate = useNavigate();
     const location = useLocation();
-    const { setColorScheme } = useMantineColorScheme();
-    const computedColorScheme = useComputedColorScheme('light', { getInitialValueInEffect: true });
+    const {setColorScheme} = useMantineColorScheme();
+    const computedColorScheme = useComputedColorScheme('light', {getInitialValueInEffect: true});
 
     const handleLogout = async () => {
         try {
@@ -19,7 +19,7 @@ export const Navbar = () => {
         } finally {
             localStorage.removeItem("access_token");
             setUser(null);
-            navigate("/login", { replace: true });
+            navigate("/login", {replace: true});
         }
     };
 

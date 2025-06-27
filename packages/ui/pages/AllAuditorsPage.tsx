@@ -9,7 +9,7 @@ import MultiFilter from "../components/MultiFilter";
 import {AuditTypeLabels} from "../enum/AuditTypeEnum";
 
 export default function AllAuditorsPage() {
-    const { user } = useUser();
+    const {user} = useUser();
     const [auditors, setAuditors] = useState<any[]>([]);
     const [selectedTypes, setSelectedTypes] = useState<string[]>([]);
     const [auditTypes, setAuditTypes] = useState<string[]>([]);
@@ -61,7 +61,7 @@ export default function AllAuditorsPage() {
         companyPreferredTypes.map((type) => [type, AuditTypeLabels[type] || type])
     );
 
-    if (loading) return <Loader />;
+    if (loading) return <Loader/>;
 
     return (
         <Container size="lg" py="lg">
@@ -78,7 +78,7 @@ export default function AllAuditorsPage() {
                     />
                 </Paper>
 
-                <SimpleGrid cols={1} breakpoints={[{ minWidth: 768, cols: 2 }]} spacing="md">
+                <SimpleGrid cols={1} breakpoints={[{minWidth: 768, cols: 2}]} spacing="md">
                     {paginatedAuditors.map((auditor) => (
                         <AuditorCard
                             key={auditor.id}
@@ -104,7 +104,7 @@ export default function AllAuditorsPage() {
                         onChange={setCurrentPage}
                         position="center"
                         mt="md"
-                        style={{ display: "flex", justifyContent: "center" }}
+                        style={{display: "flex", justifyContent: "center"}}
                     />
                 )}
 

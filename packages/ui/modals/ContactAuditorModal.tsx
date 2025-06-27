@@ -1,13 +1,6 @@
-import { useState } from "react";
-import {
-    Modal,
-    Button,
-    Textarea,
-    Group,
-    Stack,
-    Alert,
-} from "@mantine/core";
-import { useNavigate } from "react-router-dom";
+import {useState} from "react";
+import {Alert, Button, Group, Modal, Stack, Textarea,} from "@mantine/core";
+import {useNavigate} from "react-router-dom";
 import axiosInstance from "../utils/axiosInstance";
 
 interface ContactAuditorModalProps {

@@ -13,6 +13,7 @@ import {MessageItem} from './components/MessageItem';
 import {TypingIndicator} from './components/TypingIndicator';
 import {Message, MessageAction, messageReducer} from './components/messageReducer';
 import {IconArrowDown, IconSend} from '@tabler/icons-react';
+import {Loader} from "../../components/Loader";
 
 export default function ChatConversationPage() {
     const {conversationId} = useParams();
@@ -35,20 +36,16 @@ export default function ChatConversationPage() {
     const virtuosoRef = useRef<VirtuosoHandle | null>(null);
 
     const [messages, dispatch] = useReducer<React.Reducer<Message[], MessageAction>>(messageReducer, []);
+    const [followOutput, setFollowOutput] = useState<'smooth' | false>('smooth');
 
     const prevLengthRef = useRef(0);
     const isAtBottomRef = useRef(true);
 
-    useEffect(() => {
-        if (messages.length > prevLengthRef.current && isAtBottomRef.current) {
-            virtuosoRef.current?.scrollToIndex({
-                index: messages.length - 1,
-                behavior: 'smooth'
-            });
-        }
-        prevLengthRef.current = messages.length;
-    }, [messages]);
-
+    const LIMIT = 20;
+    const [offset, setOffset] = useState(0);
+    const [hasMore, setHasMore] = useState(true);
+    const [isLoadingMore, setIsLoadingMore] = useState(false);
+    const [firstItemIndex, setFirstItemIndex] = useState(0);
 
     const formatTimestamp = useCallback((timestamp) => {
         const date = new Date(timestamp);
@@ -67,22 +64,54 @@ export default function ChatConversationPage() {
         [conversationId, user]
     );
 
-    useEffect(() => {
+    const loadMessages = async (initial = false) => {
         if (!conversationId) return;
 
-        const fetchMessages = async () => {
-            try {
-                const res = await axiosInstance.get(`/chat/messages/${conversationId}`);
-                dispatch({type: 'SET_MESSAGES', payload: res.data.messages});
-                setPartner(res.data.partner);
+        try {
+            const res = await axiosInstance.get(`/chat/messages/${conversationId}`, {
+                params: {offset, limit: LIMIT}
+            });
 
-                await axiosInstance.post(`/chat/conversations/${conversationId}/read`);
-            } catch (err) {
-                console.error("Erreur récupération ou marquage comme lu :", err);
+            const newMessages = res.data.messages;
+
+            // ⚠️ Mets à jour offset en premier
+            setOffset((prev) => prev + newMessages.length);
+            setHasMore(res.data.has_more);
+
+            dispatch({
+                type: 'SET_MESSAGES',
+                payload: (prev) => {
+                    const newList = initial ? newMessages : [...newMessages, ...prev];
+
+                    if (!initial) {
+                        setFirstItemIndex((prevIndex) => prevIndex - newMessages.length);
+                    } else {
+                        setFirstItemIndex(0);
+                    }
+
+                    return newList;
+                }
+            });
+
+            if (initial) {
+                setTimeout(() => {
+                    virtuosoRef.current?.scrollToIndex({
+                        index: newMessages.length - 1,
+                        behavior: 'auto' // ou 'smooth' si tu veux que ça glisse un peu
+                    });
+                }, 100); // au lieu de 0
             }
-        };
 
-        fetchMessages();
+            setPartner(res.data.partner);
+            await axiosInstance.post(`/chat/conversations/${conversationId}/read`);
+        } catch (err) {
+            console.error("Erreur récupération ou marquage comme lu :", err);
+        }
+    };
+
+    useEffect(() => {
+        setOffset(0);
+        loadMessages(true);
     }, [conversationId]);
 
 
@@ -237,7 +266,13 @@ export default function ChatConversationPage() {
                         ref={virtuosoRef}
                         style={{flex: 1}}
                         data={messages}
-                        followOutput="auto"
+                        firstItemIndex={firstItemIndex}
+                        followOutput={followOutput}
+                        atBottomStateChange={(atBottom) => {
+                            isAtBottomRef.current = atBottom;
+                            setShowScrollToBottom(!atBottom);
+                            setFollowOutput(atBottom ? 'smooth' : false);
+                        }}
                         overscan={20}
                         itemContent={(index, msg) => (
                             <MessageItem
@@ -255,6 +290,32 @@ export default function ChatConversationPage() {
                             />
                         )}
                         onScroll={handleScroll}
+                        startReached={async () => {
+                            if (hasMore && !isLoadingMore) {
+                                setIsLoadingMore(true);
+                                await loadMessages();
+                                setIsLoadingMore(false);
+                            }
+                        }}
+                        components={{
+                            Header: () => (
+                                <>
+                                    {isLoadingMore && (
+                                        <Box p="xs" sx={{display: 'flex', justifyContent: 'center'}}>
+                                            <Loader></Loader>
+                                        </Box>
+                                    )}
+                                    {!hasMore && (
+                                        <Box p="xs" sx={{display: 'flex', justifyContent: 'center'}}>
+          <span style={{fontSize: 13, fontStyle: 'italic', color: theme.colors.gray[5]}}>
+            Début de la conversation
+          </span>
+                                        </Box>
+                                    )}
+                                </>
+                            )
+                        }}
+
                     />
 
                     {showScrollToBottom && (

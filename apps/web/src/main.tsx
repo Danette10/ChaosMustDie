@@ -6,9 +6,9 @@ import './style.css';
 import './App.css';
 
 createRoot(document.getElementById('root')!).render(
-  <StrictMode>
-      <MantineProvider defaultColorScheme="auto">
-          <App/>
-      </MantineProvider>
-  </StrictMode>,
+    <StrictMode>
+        <MantineProvider defaultColorScheme="auto">
+            <App/>
+        </MantineProvider>
+    </StrictMode>,
 )

@@ -4,10 +4,10 @@ import AnimatedRoutes from "@/components/AnimatedRoutes";
 import {Box} from "@mantine/core";
 
 const App = () => (
-    <Box w={550} style={{ overflowY: "auto", overflowX: "hidden" }}>
+    <Box w={550} style={{overflowY: "auto", overflowX: "hidden"}}>
         <HashRouter>
             <UserProvider>
-                <AnimatedRoutes />
+                <AnimatedRoutes/>
             </UserProvider>
         </HashRouter>
     </Box>

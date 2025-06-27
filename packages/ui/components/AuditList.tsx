@@ -1,21 +1,21 @@
 import {useEffect, useState} from "react";
 import {
     Badge,
+    Pagination,
     Paper,
     SimpleGrid,
     Stack,
     Text,
     Title,
     useComputedColorScheme,
-    useMantineTheme,
-    Pagination
+    useMantineTheme
 } from "@mantine/core";
 import axiosInstance from "../utils/axiosInstance";
 import {useUser} from "../context/UserContext";
 import {Loader} from "./Loader";
 import {useNavigate} from "react-router-dom";
 import MultiFilter from "./MultiFilter";
-import { statusLabels, statusColors } from "../constants/auditStatus";
+import {statusColors, statusLabels} from "../constants/auditStatus";
 import {formatDateTimeFR} from "../utils/dateUtils";
 
 interface AuditListProps {
@@ -23,8 +23,8 @@ interface AuditListProps {
     statusFilter?: string[];
 }
 
-export function AuditList({ limit, statusFilter }: AuditListProps) {
-    const { user } = useUser();
+export function AuditList({limit, statusFilter}: AuditListProps) {
+    const {user} = useUser();
     const navigate = useNavigate();
     const theme = useMantineTheme();
     const colorScheme = useComputedColorScheme();
@@ -74,7 +74,7 @@ export function AuditList({ limit, statusFilter }: AuditListProps) {
     const paginated = finalList.slice((currentPage - 1) * itemsPerPage, currentPage * itemsPerPage);
     const totalPages = Math.ceil(finalList.length / itemsPerPage);
 
-    if (loading) return <Loader />;
+    if (loading) return <Loader/>;
 
     return (
         <Stack spacing="xl">
@@ -92,60 +92,60 @@ export function AuditList({ limit, statusFilter }: AuditListProps) {
                 </Paper>
             )}
 
-            <SimpleGrid cols={1} breakpoints={[{ minWidth: 768, cols: 2 }]} spacing="md">
+            <SimpleGrid cols={1} breakpoints={[{minWidth: 768, cols: 2}]} spacing="md">
                 {paginated.map((audit) => {
                     const isAuditor = user?.user_type === "auditor";
                     const isCompany = user?.user_type === "company";
                     const clickable =
                         (isAuditor && audit.status !== "pending") ||
                         (isCompany && ["completed", "failed"].includes(audit.status));
-                return (
-                    <Paper
-                        key={audit.id}
-                        shadow="sm"
-                        p="md"
-                        withBorder
-                        style={{
-                            cursor: clickable ? "pointer" : "default",
-                        }}
-                        onClick={() => {
-                            if (["completed", "failed"].includes(audit.status)) {
-                                navigate(`/audit/view/${audit.id}`);
-                            } else if (isAuditor && audit.status !== "pending") {
-                                navigate(`/audit/start/${audit.id}`);
-                            }
-                        }}
-                        onMouseEnter={(e) => {
-                            if (clickable) {
-                                e.currentTarget.style.backgroundColor = isDark
-                                    ? theme.colors.dark[5]
-                                    : theme.colors.gray[0];
-                            }
-                        }}
-                        onMouseLeave={(e) => {
-                            if (clickable) {
-                                e.currentTarget.style.backgroundColor = isDark
-                                    ? theme.colors.dark[7]
-                                    : theme.white;
-                            }
-                        }}
-                    >
-                        <Stack spacing="xs">
-                            <Text fw={600}>
-                                Audit de{" "}
-                                <strong>
-                                    {user?.user_type === "company"
-                                        ? `${audit.auditor?.first_name} ${audit.auditor?.last_name}`
-                                        : audit.company?.name}
-                                </strong>
-                            </Text>
-                            <Text size="sm">Date : {formatDateTimeFR(audit.audit_date)}</Text>
-                            <Badge color={statusColors[audit.status] || "gray"}>
-                                {statusLabels[audit.status] || audit.status}
-                            </Badge>
-                        </Stack>
-                    </Paper>
-                );
+                    return (
+                        <Paper
+                            key={audit.id}
+                            shadow="sm"
+                            p="md"
+                            withBorder
+                            style={{
+                                cursor: clickable ? "pointer" : "default",
+                            }}
+                            onClick={() => {
+                                if (["completed", "failed"].includes(audit.status)) {
+                                    navigate(`/audit/view/${audit.id}`);
+                                } else if (isAuditor && audit.status !== "pending") {
+                                    navigate(`/audit/start/${audit.id}`);
+                                }
+                            }}
+                            onMouseEnter={(e) => {
+                                if (clickable) {
+                                    e.currentTarget.style.backgroundColor = isDark
+                                        ? theme.colors.dark[5]
+                                        : theme.colors.gray[0];
+                                }
+                            }}
+                            onMouseLeave={(e) => {
+                                if (clickable) {
+                                    e.currentTarget.style.backgroundColor = isDark
+                                        ? theme.colors.dark[7]
+                                        : theme.white;
+                                }
+                            }}
+                        >
+                            <Stack spacing="xs">
+                                <Text fw={600}>
+                                    Audit de{" "}
+                                    <strong>
+                                        {user?.user_type === "company"
+                                            ? `${audit.auditor?.first_name} ${audit.auditor?.last_name}`
+                                            : audit.company?.name}
+                                    </strong>
+                                </Text>
+                                <Text size="sm">Date : {formatDateTimeFR(audit.audit_date)}</Text>
+                                <Badge color={statusColors[audit.status] || "gray"}>
+                                    {statusLabels[audit.status] || audit.status}
+                                </Badge>
+                            </Stack>
+                        </Paper>
+                    );
                 })}
             </SimpleGrid>
 

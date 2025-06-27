@@ -8,7 +8,7 @@ import {UserTypeLabel} from "../enum/UserTypeEnum";
 import {AuditTypeEnum, AuditTypeLabels} from "../enum/AuditTypeEnum";
 
 export default function ProfilePage() {
-    const { user } = useUser();
+    const {user} = useUser();
     const [allAudits, setAllAudits] = useState<string[]>([]);
     const [selectedAudits, setSelectedAudits] = useState<string[]>([]);
     const [success, setSuccess] = useState("");
@@ -46,7 +46,7 @@ export default function ProfilePage() {
 
     const handleSave = () => {
         axiosInstance
-            .post("/profile/audits", { selected: selectedAudits })
+            .post("/profile/audits", {selected: selectedAudits})
             .then(() => {
                 setSuccess("Préférences enregistrées avec succès");
                 setError("");
@@ -91,19 +91,19 @@ export default function ProfilePage() {
         }
     }, [success, error]);
 
-    if (loading) return <Loader />;
+    if (loading) return <Loader/>;
 
     return (
         <Container size="sm" p="md">
             <Paper p="lg" radius="md" shadow="sm">
                 <Title order={2} mb="xs">Profil</Title>
                 {error && showAlert && (
-                    <Alert color="red" icon={<IconX size={16} />} mb="sm">
+                    <Alert color="red" icon={<IconX size={16}/>} mb="sm">
                         {error}
                     </Alert>
                 )}
                 {success && showAlert && (
-                    <Alert color="green" icon={<IconCheck size={16} />} mb="sm">
+                    <Alert color="green" icon={<IconCheck size={16}/>} mb="sm">
                         {success}
                     </Alert>
                 )}
@@ -178,7 +178,7 @@ export default function ProfilePage() {
                         onChange={(e) => setNewPassword(e.currentTarget.value)}
                     />
                     {changePasswordError && (
-                        <Alert color="red" icon={<IconX size={16} />} mb="sm">
+                        <Alert color="red" icon={<IconX size={16}/>} mb="sm">
                             {changePasswordError}
                         </Alert>
                     )}
