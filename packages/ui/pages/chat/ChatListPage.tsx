@@ -1,21 +1,21 @@
-import { useEffect, useState } from "react";
+import {useEffect, useState} from "react";
 import {
+    Badge,
     Box,
     Group,
+    Loader,
     Paper,
     Stack,
     Text,
     Title,
-    useMantineTheme,
     useComputedColorScheme,
-    Loader,
-    Badge
+    useMantineTheme
 } from "@mantine/core";
-import { useNavigate } from "react-router-dom";
+import {useNavigate} from "react-router-dom";
 import PageTransition from "../../components/PageTransition";
 import axiosInstance from "../../utils/axiosInstance";
-import { useChatSocket } from "../../hooks/useChatSocket";
-import { motion } from "framer-motion";
+import {useSocket} from "../../hooks/useSocket";
+import {motion} from "framer-motion";
 
 export default function ChatListPage() {
     const [conversations, setConversations] = useState<any[]>([]);
@@ -25,7 +25,7 @@ export default function ChatListPage() {
     const theme = useMantineTheme();
     const colorScheme = useComputedColorScheme();
     const isDark = colorScheme === "dark";
-    const socketRef = useChatSocket();
+    const socketRef = useSocket();
 
     useEffect(() => {
         axiosInstance.get("/chat/conversations")
@@ -50,6 +50,23 @@ export default function ChatListPage() {
 
         const handleStopTyping = (data: any) => {
             setTypingMap(prev => ({ ...prev, [data.conversation_id]: false }));
+        };
+
+        const handleMessageDeleted = (data: any) => {
+            setConversations(prev => prev.map(conv => {
+                if (conv.id !== data.conversation_id) return conv;
+
+                const isLastMessage = conv.last_message_id === data.message_id;
+
+                return {
+                    ...conv,
+                    last_message: isLastMessage ? "Message supprimé" : conv.last_message,
+                    last_message_id: isLastMessage ? data.message_id : conv.last_message_id,
+                    unread_count: data.was_unread && isLastMessage
+                        ? Math.max(conv.unread_count - 1, 0)
+                        : conv.unread_count
+                };
+            }));
         };
 
         const handleNewMessage = (data: any) => {
@@ -83,12 +100,14 @@ export default function ChatListPage() {
         socketRef.current.on("stop_typing", handleStopTyping);
         socketRef.current.on("new_message", handleNewMessage);
         socketRef.current.on("message_read", handleMessageRead);
+        socketRef.current.on("message_deleted", handleMessageDeleted);
 
         return () => {
             socketRef.current.off("typing", handleTyping);
             socketRef.current.off("stop_typing", handleStopTyping);
             socketRef.current.off("new_message", handleNewMessage);
             socketRef.current.off("message_read", handleMessageRead);
+            socketRef.current.off("message_deleted", handleMessageDeleted);
         };
     }, [socketRef]);
 
@@ -146,6 +165,7 @@ export default function ChatListPage() {
                                             <Text
                                                 size="md"
                                                 color="dimmed"
+                                                component="span"
                                                 style={{
                                                     overflow: "hidden",
                                                     textOverflow: "ellipsis",
@@ -154,7 +174,7 @@ export default function ChatListPage() {
                                                 }}
                                             >
                                                 {typingMap[conv.id] ? (
-                                                    <motion.div style={{ display: "inline-flex", gap: "4px" }}>
+                                                    <motion.span style={{display: "inline-flex", gap: "4px"}}>
                                                         {[0, 1, 2].map((i) => (
                                                             <motion.span
                                                                 key={i}
@@ -170,7 +190,7 @@ export default function ChatListPage() {
                                                                 •
                                                             </motion.span>
                                                         ))}
-                                                    </motion.div>
+                                                    </motion.span>
                                                 ) : (
                                                     conv.last_message || "Aucun message"
                                                 )}
