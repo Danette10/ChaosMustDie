@@ -1,6 +1,6 @@
-import { ArrowLeft } from "lucide-react";
-import { useNavigate } from "react-router-dom";
-import { ActionIcon, rem, useComputedColorScheme } from "@mantine/core";
+import {ArrowLeft} from "lucide-react";
+import {useNavigate} from "react-router-dom";
+import {ActionIcon, useComputedColorScheme} from "@mantine/core";
 
 export const BackButton = () => {
     const navigate = useNavigate();
@@ -15,7 +15,7 @@ export const BackButton = () => {
             variant="light"
             color={isDark ? "gray.4" : "gray.7"}
         >
-            <ArrowLeft size={20} color={isDark ? "#fff" : "#000"} />
+            <ArrowLeft size={20} color={isDark ? "#fff" : "#000"}/>
         </ActionIcon>
     );
 };

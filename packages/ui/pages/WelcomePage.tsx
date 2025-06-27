@@ -1,11 +1,11 @@
-import { useEffect } from "react";
-import { useNavigate } from "react-router-dom";
-import { Button, Center, Stack, Text, Title, Box } from "@mantine/core";
+import {useEffect} from "react";
+import {useNavigate} from "react-router-dom";
+import {Box, Button, Center, Stack, Text, Title} from "@mantine/core";
 import PageTransition from "../components/PageTransition";
-import { useUser } from "../context/UserContext";
+import {useUser} from "../context/UserContext";
 
-export default function  WelcomePage () {
-    const { user, loading } = useUser();
+export default function WelcomePage() {
+    const {user, loading} = useUser();
     const navigate = useNavigate();
 
     useEffect(() => {

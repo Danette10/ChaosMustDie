@@ -1,19 +1,9 @@
-import { useState } from "react";
-import { useNavigate } from "react-router-dom";
-import { motion } from "framer-motion";
-import {
-    Box,
-    Button,
-    Paper,
-    Alert,
-    Text,
-    Title,
-    Center,
-    PinInput,
-    Group
-} from "@mantine/core";
-import { IconCheck, IconX } from "@tabler/icons-react";
-import { BackButton } from "../../components/BackButton";
+import {useState} from "react";
+import {useNavigate} from "react-router-dom";
+import {motion} from "framer-motion";
+import {Alert, Box, Button, Center, Group, Paper, PinInput, Text, Title} from "@mantine/core";
+import {IconCheck, IconX} from "@tabler/icons-react";
+import {BackButton} from "../../components/BackButton";
 import axiosInstance from "../../utils/axiosInstance";
 
 export default function ConfirmCode() {
@@ -27,7 +17,7 @@ export default function ConfirmCode() {
     const handleConfirm = async () => {
         setSubmitting(true);
         try {
-            await axiosInstance.post("/auth/confirm-code", { code });
+            await axiosInstance.post("/auth/confirm-code", {code});
             setSuccess("Compte confirmé avec succès");
             setError("");
             localStorage.removeItem("pending_confirmation_email");
@@ -49,7 +39,7 @@ export default function ConfirmCode() {
         }
 
         try {
-            await axiosInstance.post("/auth/resend-code", { email });
+            await axiosInstance.post("/auth/resend-code", {email});
             setSuccess("Code renvoyé par email");
             setError("");
         } catch {
@@ -60,28 +50,28 @@ export default function ConfirmCode() {
 
     return (
         <motion.div
-            initial={{ opacity: 0, x: 50 }}
-            animate={{ opacity: 1, x: 0 }}
-            exit={{ opacity: 0, x: -50 }}
-            transition={{ duration: 0.3 }}
+            initial={{opacity: 0, x: 50}}
+            animate={{opacity: 1, x: 0}}
+            exit={{opacity: 0, x: -50}}
+            transition={{duration: 0.3}}
         >
             <Center h="100vh" px="md">
                 <Paper w={360} p="lg" radius="md" shadow="sm">
                     <Group justify="space-between" align="center" mb="md">
-                        <BackButton />
+                        <BackButton/>
                         <Title order={3} m={0}>
                             Confirmation du compte
                         </Title>
-                        <Box w={32} />
+                        <Box w={32}/>
                     </Group>
 
                     {error && (
-                        <Alert color="red" icon={<IconX size={16} />} mb="sm">
+                        <Alert color="red" icon={<IconX size={16}/>} mb="sm">
                             {error}
                         </Alert>
                     )}
                     {success && (
-                        <Alert color="green" icon={<IconCheck size={16} />} mb="sm">
+                        <Alert color="green" icon={<IconCheck size={16}/>} mb="sm">
                             {success}
                         </Alert>
                     )}
@@ -98,7 +88,7 @@ export default function ConfirmCode() {
                         size="lg"
                         mb="md"
                         disabled={submitting}
-                        style={{ display: "flex", justifyContent: "center", gap: 8 }}
+                        style={{display: "flex", justifyContent: "center", gap: 8}}
                     />
 
                     <Button fullWidth onClick={handleConfirm} loading={submitting}>

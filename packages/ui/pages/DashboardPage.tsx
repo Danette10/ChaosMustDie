@@ -1,19 +1,17 @@
-import { useEffect, useState } from "react";
-import { useNavigate } from "react-router-dom";
-import {
-    Box, Button, Container, Group, Paper, SimpleGrid, Stack, Text, Title
-} from "@mantine/core";
+import {useEffect, useState} from "react";
+import {useNavigate} from "react-router-dom";
+import {Box, Button, Container, Group, Paper, SimpleGrid, Stack, Title} from "@mantine/core";
 import axiosInstance from "../utils/axiosInstance";
-import { useUser } from "../context/UserContext";
-import { Loader } from "../components/Loader";
-import { ContactAuditorModal } from "../modals/ContactAuditorModal";
-import { AuditorCard } from "../components/AuditorCard";
+import {useUser} from "../context/UserContext";
+import {Loader} from "../components/Loader";
+import {ContactAuditorModal} from "../modals/ContactAuditorModal";
+import {AuditorCard} from "../components/AuditorCard";
 import MultiFilter from "../components/MultiFilter";
-import { AuditTypeLabels } from "../enum/AuditTypeEnum";
-import { AuditList } from "../components/AuditList";
+import {AuditTypeLabels} from "../enum/AuditTypeEnum";
+import {AuditList} from "../components/AuditList";
 
 export default function DashboardPage() {
-    const { user } = useUser();
+    const {user} = useUser();
     const navigate = useNavigate();
 
     const [auditors, setAuditors] = useState<any[]>([]);
@@ -62,7 +60,7 @@ export default function DashboardPage() {
         auditTypes.map((type) => [type, AuditTypeLabels[type] || type])
     );
 
-    if (loading) return <Loader />;
+    if (loading) return <Loader/>;
 
     return (
         <Container size="lg" py="lg">
@@ -89,7 +87,7 @@ export default function DashboardPage() {
                                 </Button>
                             </Group>
 
-                            <SimpleGrid cols={1} breakpoints={[{ minWidth: 768, cols: 2 }]} spacing="md">
+                            <SimpleGrid cols={1} breakpoints={[{minWidth: 768, cols: 2}]} spacing="md">
                                 {filteredAuditors.slice(0, 5).map((auditor) => (
                                     <AuditorCard
                                         key={auditor.id}

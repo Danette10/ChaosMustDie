@@ -1,375 +1,408 @@
-import {useParams} from "react-router-dom";
-import {useEffect, useRef, useState} from "react";
-import {
-    Badge,
-    Box,
-    Button,
-    Group,
-    Paper,
-    ScrollArea,
-    Stack,
-    Text,
-    Textarea,
-    Title,
-    useComputedColorScheme,
-    useMantineTheme
-} from "@mantine/core";
-import PageTransition from "../../components/PageTransition";
-import axiosInstance from "../../utils/axiosInstance";
-import {BackButton} from "../../components/BackButton";
+import React, {useCallback, useEffect, useReducer, useRef, useState} from 'react';
+import {debounce} from 'lodash';
+import {useNavigate, useParams} from 'react-router-dom';
+import {ActionIcon, Box, Group, Input, Paper, Title, useComputedColorScheme, useMantineTheme} from '@mantine/core';
+import {Virtuoso, VirtuosoHandle} from 'react-virtuoso';
+import PageTransition from '../../components/PageTransition';
+import axiosInstance from '../../utils/axiosInstance';
+import {BackButton} from '../../components/BackButton';
+import {useUser} from '../../context/UserContext';
+import {useSocket} from '../../hooks/useSocket';
 import ConfirmModal from "../../modals/ConfirmModal";
-import {useUser} from "../../context/UserContext";
-import {UserTypeEnum} from "../../enum/UserTypeEnum";
-import EndAuditModal from "../../modals/EndAuditModal";
-import {notifications} from "@mantine/notifications";
+import {MessageItem} from './components/MessageItem';
+import {TypingIndicator} from './components/TypingIndicator';
+import {Message, MessageAction, messageReducer} from './components/messageReducer';
+import {IconArrowDown, IconSend} from '@tabler/icons-react';
+import {Loader} from "../../components/Loader";
 
 export default function ChatConversationPage() {
-    const { conversationId } = useParams();
-    const { user } = useUser();
+    const {conversationId} = useParams();
+    const navigate = useNavigate();
+    const {user} = useUser();
     const theme = useMantineTheme();
     const colorScheme = useComputedColorScheme();
-    const isDark = colorScheme === "dark";
+    const isDark = colorScheme === 'dark';
+    const socketRef = useSocket();
+    const isCurrentlyTyping = useRef(false);
 
-    const scrollRef = useRef<HTMLDivElement>(null);
-    const [messages, setMessages] = useState([]);
-    const [input, setInput] = useState("");
-    const [partner, setPartner] = useState<{
-        company: { id: number } | null;
-        id: number; firstname: string; lastname: string } | null>(null);
-    const [contextMenu, setContextMenu] = useState<{ x: number; y: number; id: number | null }>({ x: 0, y: 0, id: null });
-    const [confirmDeleteId, setConfirmDeleteId] = useState<number | null>(null);
-    const [loadingDelete, setLoadingDelete] = useState(false);
-    const [auditStatus, setAuditStatus] = useState<string | null>(null);
-    const [showFinishModal, setShowFinishModal] = useState(false);
-    const [endAuditLoading, setEndAuditLoading] = useState(false);
-    const [auditId, setAuditId] = useState<string | null>(null);
+    const [input, setInput] = useState('');
+    const [partner, setPartner] = useState(null);
+    const [typingUser, setTypingUser] = useState(false);
+    const [hoveredMessageId, setHoveredMessageId] = useState(null);
+    const [messageToDelete, setMessageToDelete] = useState<number | null>(null);
+    const [confirmDeleteOpen, setConfirmDeleteOpen] = useState(false);
+    const [deleting, setDeleting] = useState(false);
+    const [showScrollToBottom, setShowScrollToBottom] = useState(false);
+    const virtuosoRef = useRef<VirtuosoHandle | null>(null);
 
-    useEffect(() => {
-        if (!conversationId) return;
+    const [messages, dispatch] = useReducer<React.Reducer<Message[], MessageAction>>(messageReducer, []);
+    const [followOutput, setFollowOutput] = useState<'smooth' | false>('smooth');
 
-        axiosInstance.get(`/chat/messages/${conversationId}`)
-            .then(res => {
-                setMessages(res.data.messages);
-                setPartner(res.data.partner);
-                if (res.data.audit_id) {
-                    setAuditId(res.data.audit_id);
-                }
-            })
-            .catch(console.error);
-    }, [conversationId]);
+    const prevLengthRef = useRef(0);
+    const isAtBottomRef = useRef(true);
 
-    useEffect(() => {
-        const hideContextMenu = () => setContextMenu({ x: 0, y: 0, id: null });
-        window.addEventListener("click", hideContextMenu);
-        return () => window.removeEventListener("click", hideContextMenu);
+    const LIMIT = 20;
+    const [offset, setOffset] = useState(0);
+    const [hasMore, setHasMore] = useState(true);
+    const [isLoadingMore, setIsLoadingMore] = useState(false);
+    const [firstItemIndex, setFirstItemIndex] = useState(0);
+
+    const formatTimestamp = useCallback((timestamp) => {
+        const date = new Date(timestamp);
+        return `le ${date.toLocaleDateString("fr-FR")} à ${date.toLocaleTimeString("fr-FR")}`;
     }, []);
 
-    useEffect(() => {
-        if (!partner || !user) return;
+    const emitTyping = () => {
+        socketRef.current?.emit("typing", {conversation_id: conversationId, user_id: user?.id});
+    };
 
-        const fetchAuditStatus = async () => {
-            if (!partner || !user) return;
+    const emitStopTyping = useCallback(
+        debounce(() => {
+            socketRef.current?.emit("stop_typing", {conversation_id: conversationId, user_id: user?.id});
+            isCurrentlyTyping.current = false;
+        }, 1500),
+        [conversationId, user]
+    );
 
-            const auditor_id = user.user_type === UserTypeEnum.AUDITOR ? user.id : partner.id;
-            const company_id = user.user_type === UserTypeEnum.COMPANY
-                ? user.company?.id
-                : partner.company?.id;
+    const loadMessages = async (initial = false) => {
+        if (!conversationId) return;
 
-            if (!auditor_id || !company_id) {
-                console.warn("Impossible de récupérer audit status : ID manquant");
-                return;
+        try {
+            const res = await axiosInstance.get(`/chat/messages/${conversationId}`, {
+                params: {offset, limit: LIMIT}
+            });
+
+            const newMessages = res.data.messages;
+
+            // ⚠️ Mets à jour offset en premier
+            setOffset((prev) => prev + newMessages.length);
+            setHasMore(res.data.has_more);
+
+            dispatch({
+                type: 'SET_MESSAGES',
+                payload: (prev) => {
+                    const newList = initial ? newMessages : [...newMessages, ...prev];
+
+                    if (!initial) {
+                        setFirstItemIndex((prevIndex) => prevIndex - newMessages.length);
+                    } else {
+                        setFirstItemIndex(0);
+                    }
+
+                    return newList;
+                }
+            });
+
+            if (initial) {
+                setTimeout(() => {
+                    virtuosoRef.current?.scrollToIndex({
+                        index: newMessages.length - 1,
+                        behavior: 'auto' // ou 'smooth' si tu veux que ça glisse un peu
+                    });
+                }, 100); // au lieu de 0
             }
 
-            try {
-                const res = await axiosInstance.get("/audit/status", {
-                    params: { auditor_id, company_id },
+            setPartner(res.data.partner);
+            await axiosInstance.post(`/chat/conversations/${conversationId}/read`);
+        } catch (err) {
+            console.error("Erreur récupération ou marquage comme lu :", err);
+        }
+    };
+
+    useEffect(() => {
+        setOffset(0);
+        loadMessages(true);
+    }, [conversationId]);
+
+
+    useEffect(() => {
+        if (!conversationId || !socketRef.current) return;
+        const socket = socketRef.current;
+
+        const handleNewMessage = (message) => {
+            if (parseInt(conversationId) === message.conversation_id) {
+                const isMine = message.sender_id === user?.id;
+                if (isMine) return;
+                dispatch({
+                    type: 'ADD_MESSAGE',
+                    payload: {
+                        id: message.id,
+                        from: "other",
+                        sender_id: message.sender_id,
+                        deleted: false,
+                        content: message.content,
+                        timestamp: message.timestamp
+                    }
                 });
-                setAuditStatus(res.data.status);
-            } catch (err) {
-                console.error("Erreur récupération statut audit :", err);
+                axiosInstance.post(`/chat/conversations/${conversationId}/read`).catch(console.error);
             }
         };
 
+        const handleDeletedMessage = (data) => {
+            if (parseInt(conversationId) !== data.conversation_id) return;
+            dispatch({
+                type: 'SET_MESSAGES',
+                payload: (prevMessages) =>
+                    prevMessages.map((msg) =>
+                        msg.id === data.message_id
+                            ? {
+                                ...msg,
+                                content: 'Message supprimé',
+                                deleted: true,
+                                deleted_at: data.deleted_at
+                            }
+                            : msg
+                    ),
+            });
+        };
 
-        fetchAuditStatus();
-    }, [partner, user]);
+        socket.emit("join_conversation", {conversation_id: conversationId});
+        socket.on("new_message", handleNewMessage);
+        socket.on("typing", (data) => {
+            if (data.conversation_id === conversationId) setTypingUser(true);
+        });
+        socket.on("stop_typing", (data) => {
+            if (data.conversation_id === conversationId) setTypingUser(false);
+        });
+        socket.on("message_deleted", handleDeletedMessage);
+
+        return () => {
+            socket.emit("stop_typing", {conversation_id: conversationId, user_id: user?.id});
+            socket.off("new_message", handleNewMessage);
+            socket.off("typing");
+            socket.off("stop_typing");
+            socket.off("message_deleted", handleDeletedMessage);
+        };
+    }, [conversationId, user, socketRef]);
 
     const sendMessage = async () => {
         if (!input.trim()) return;
         try {
-            const res = await axiosInstance.post(`/chat/messages/${conversationId}`, { content: input });
-            setMessages(prev => [...prev, res.data]);
-            setInput("");
+            const res = await axiosInstance.post(`/chat/messages/${conversationId}`, {content: input});
+
+            dispatch({
+                type: 'ADD_MESSAGE',
+                payload: {
+                    ...res.data,
+                    from: "me",
+                    sender_id: user?.id,
+                    deleted: false
+                }
+            });
+            setInput('');
+            socketRef.current?.emit("stop_typing", {conversation_id: conversationId, user_id: user?.id});
+            emitStopTyping.cancel();
+            isCurrentlyTyping.current = false;
         } catch (err) {
             console.error(err);
         }
     };
 
-    const deleteMessage = async () => {
-        if (confirmDeleteId === null) return;
-        setLoadingDelete(true);
+    const confirmDeleteMessage = async () => {
+        if (messageToDelete === null) return;
+        setDeleting(true);
         try {
-            await axiosInstance.delete(`/chat/messages/${confirmDeleteId}`);
-            setMessages(prev => prev.filter(m => m.id !== confirmDeleteId));
-        } catch (err) {
-            console.error("Erreur suppression :", err);
-        } finally {
-            setConfirmDeleteId(null);
-            setLoadingDelete(false);
-        }
-    };
-
-    const handleAuditResponse = async (action: "accept" | "refuse") => {
-        if (!user || !partner) return;
-
-        const auditor_id = user.user_type === UserTypeEnum.COMPANY ? partner.id : user.id;
-        const company_id = user.user_type === UserTypeEnum.COMPANY
-            ? user.company.id
-            : partner?.company?.id;
-
-        if (!auditor_id || !company_id) {
-            console.warn("Impossible d'envoyer la réponse à l’audit : ID manquant");
-            return;
-        }
-
-        const formData = new FormData();
-        formData.append("auditor_id", auditor_id.toString());
-        formData.append("company_id", company_id.toString());
-        formData.append("action", action);
-
-        try {
-            const res = await axiosInstance.patch("/audit/respond", formData);
-
-            if (action === "accept" && res.data?.audit_id && conversationId) {
-                await axiosInstance.patch(`/chat/conversation/${conversationId}/link-audit`, {
-                    audit_id: res.data.audit_id,
-                });
-            }
-
-            setAuditStatus(action === "accept" ? "in_progress" : null);
-        } catch (err) {
-            console.error(`Erreur lors de l’audit ${action}:`, err);
-        }
-    };
-
-    const handleAuditEnd = async (data: { success: boolean; comment: string; reportFile?: File }) => {
-        setEndAuditLoading(true);
-        try {
-            const formData = new FormData();
-            formData.append("auditor_id", user.id.toString());
-            formData.append("company_id", partner?.company?.id?.toString() || "");
-            formData.append("success", data.success.toString());
-            formData.append("comment", data.comment);
-            if (!auditId) {
-                console.error("audit_id est manquant !");
-                return;
-            }
-            formData.append("audit_id", auditId);
-            if (data.success && data.reportFile) {
-                formData.append("file", data.reportFile);
-            }
-
-            await axiosInstance.post("/audit/finish", formData);
-
-            notifications.show({
-                title: "Audit terminé",
-                message: "L’audit a été terminé avec succès.",
-                color: "green",
+            await axiosInstance.delete(`/chat/messages/${messageToDelete}`);
+            dispatch({
+                type: 'SET_MESSAGES',
+                payload: messages.map((msg) =>
+                    msg.id === messageToDelete
+                        ? {
+                            ...msg,
+                            content: 'Message supprimé',
+                            deleted: true,
+                            deleted_at: new Date().toISOString()
+                        }
+                        : msg
+                ),
             });
-
-            setAuditStatus("completed");
-            setShowFinishModal(false);
         } catch (err) {
-            console.error("Erreur lors de la fin d'audit :", err);
-            notifications.show({
-                title: "Erreur",
-                message: "Impossible de terminer l’audit. Veuillez réessayer.",
-                color: "red",
-            });
+            console.error("Erreur suppression message :", err);
         } finally {
-            setEndAuditLoading(false);
+            setDeleting(false);
+            setConfirmDeleteOpen(false);
+            setMessageToDelete(null);
         }
     };
 
-    const formatTimestamp = (timestamp: string) => {
-        const date = new Date(timestamp);
-        return `le ${date.toLocaleDateString("fr-FR")} à ${date.toLocaleTimeString("fr-FR")}`;
+    const handleScroll = useCallback((e) => {
+        const {scrollHeight, scrollTop, clientHeight} = e.target;
+        const distanceFromBottom = scrollHeight - scrollTop - clientHeight;
+        setShowScrollToBottom((prev) => {
+            const shouldShow = distanceFromBottom > 200;
+            return prev !== shouldShow ? shouldShow : prev;
+        });
+    }, []);
+
+    const scrollToBottom = () => {
+        virtuosoRef.current?.scrollToIndex({index: messages.length - 1, behavior: 'smooth'});
     };
 
     return (
         <PageTransition>
             <Box p="md">
-                <Group position="apart" mb="md">
-                    <BackButton />
+                <Group position="apart" mb="xs">
                     <Group spacing="sm">
-                        <Title order={3}>
-                            {partner ? `${partner.firstname} ${partner.lastname}` : "Conversation"}
-                        </Title>
-
-                        {user?.user_type === UserTypeEnum.COMPANY && (
-                            auditStatus === "in_progress" ? (
-                                <Badge color="teal" size="md">Audit en cours</Badge>
-                            ) : (
-                                <Button
-                                    size="xs"
-                                    variant="light"
-                                    onClick={async () => {
-                                        try {
-                                            await axiosInstance.post("/audit/request", {
-                                                auditor_id: partner?.id,
-                                                company_id: user.company.id,
-                                            });
-
-                                            const statusRes = await axiosInstance.get("/audit/status", {
-                                                params: {
-                                                    auditor_id: partner?.id,
-                                                    company_id: user.company.id,
-                                                },
-                                            });
-                                            setAuditStatus(statusRes.data.status);
-                                        } catch (err) {
-                                            console.error("Erreur demande audit :", err);
-                                        }
-                                    }}
-                                    disabled={auditStatus === "pending"}
-                                >
-                                    {auditStatus === "pending"
-                                        ? "Demande d'audit envoyée"
-                                        : "Demander un audit"}
-                                </Button>
-                            )
-                        )}
-
-
-                        {user?.user_type === UserTypeEnum.AUDITOR && auditStatus === "pending" && (
-                            <Group spacing={4}>
-                                <Button size="xs" color="green" variant="light" onClick={() => handleAuditResponse("accept")}>
-                                    Accepter l'audit
-                                </Button>
-                                <Button size="xs" color="red" variant="light" onClick={() => handleAuditResponse("refuse")}>
-                                    Refuser l'audit
-                                </Button>
-                            </Group>
-                        )}
-                        {user?.user_type === UserTypeEnum.AUDITOR && auditStatus === "in_progress" && (
-                            <Group spacing={8}>
-                                <Badge color="teal" size="md">Audit en cours</Badge>
-                                <Button size="xs" variant="light" color="blue" onClick={() => setShowFinishModal(true)}>
-                                    Terminer l'audit
-                                </Button>
-                            </Group>
-                        )}
+                        <BackButton onClick={() => {
+                            socketRef.current?.emit("stop_typing", {
+                                conversation_id: conversationId,
+                                user_id: user?.id
+                            });
+                            navigate(-1);
+                        }}/>
+                        <Title order={3}>{partner ? `${partner.firstname} ${partner.lastname}` : "Conversation"}</Title>
                     </Group>
                 </Group>
 
-                <Paper shadow="xs" p="sm" withBorder style={{ height: 400, display: "flex", flexDirection: "column" }}>
-                    <ScrollArea style={{ flex: 1 }} viewportRef={scrollRef}>
-                        <Stack>
-                            {messages.map(msg => (
-                                <Box
-                                    key={msg.id}
-                                    style={{ display: "flex", justifyContent: msg.from === "me" ? "flex-end" : "flex-start" }}
-                                >
-                                    <Box
-                                        onContextMenu={(e) => {
-                                            e.preventDefault();
-                                            if (msg.from === "me") {
-                                                setContextMenu({ x: e.clientX, y: e.clientY, id: msg.id });
-                                            }
-                                        }}
-                                        p="sm"
-                                        bg={msg.from === "me" ? (isDark ? "blue.9" : "blue.0") : (isDark ? theme.colors.dark[5] : theme.colors.gray[1])}
-                                        maw={300}
-                                        style={{
-                                            display: "inline-flex",
-                                            flexDirection: "column",
-                                            alignItems: "flex-start",
-                                            borderRadius: 16,
-                                            minWidth: "calc(15rem * var(--mantine-scale))",
-                                            cursor: msg.from === "me" ? "context-menu" : "default",
-                                        }}
-                                    >
-                                        <Text style={{ wordBreak: "break-word" }}>{msg.content}</Text>
-                                        <Text size="sm" style={{ alignSelf: "flex-end", marginTop: 4 }}>
-                                            <em>{formatTimestamp(msg.timestamp)}</em>
-                                        </Text>
-                                    </Box>
-                                </Box>
-                            ))}
-                        </Stack>
+                <TypingIndicator typingUser={typingUser}/>
 
-                        {contextMenu.id !== null && (
-                            <Box
-                                style={{
-                                    position: "fixed",
-                                    top: contextMenu.y,
-                                    left: contextMenu.x,
-                                    zIndex: 9999,
-                                    backgroundColor: isDark ? theme.colors.dark[6] : theme.white,
-                                    boxShadow: "0 2px 12px rgba(0,0,0,0.2)",
-                                    borderRadius: 8,
-                                    padding: "6px 10px",
-                                    minWidth: 120,
-                                    border: `1px solid ${isDark ? theme.colors.dark[4] : theme.colors.gray[3]}`,
+                <Paper
+                    shadow="xs"
+                    p="sm"
+                    withBorder
+                    style={{height: 400, display: "flex", flexDirection: "column", position: "relative"}}
+                >
+                    <Virtuoso
+                        ref={virtuosoRef}
+                        style={{flex: 1}}
+                        data={messages}
+                        firstItemIndex={firstItemIndex}
+                        followOutput={followOutput}
+                        atBottomStateChange={(atBottom) => {
+                            isAtBottomRef.current = atBottom;
+                            setShowScrollToBottom(!atBottom);
+                            setFollowOutput(atBottom ? 'smooth' : false);
+                        }}
+                        overscan={20}
+                        itemContent={(index, msg) => (
+                            <MessageItem
+                                msg={msg}
+                                isHovered={hoveredMessageId === msg.id}
+                                onHover={setHoveredMessageId}
+                                onUnhover={() => setHoveredMessageId(null)}
+                                onDeleteClick={(id) => {
+                                    setMessageToDelete(id);
+                                    setConfirmDeleteOpen(true);
                                 }}
-                                onClick={(e) => e.stopPropagation()}
-                            >
-                                <Button
-                                    size="xs"
-                                    color="red"
-                                    variant="light"
-                                    fullWidth
-                                    onClick={() => {
-                                        setContextMenu({ x: 0, y: 0, id: null });
-                                        setConfirmDeleteId(contextMenu.id!);
-                                    }}
-                                >
-                                    Supprimer
-                                </Button>
-                            </Box>
+                                formatTimestamp={formatTimestamp}
+                                isDark={isDark}
+                                theme={theme}
+                            />
                         )}
-                    </ScrollArea>
+                        onScroll={handleScroll}
+                        startReached={async () => {
+                            if (hasMore && !isLoadingMore) {
+                                setIsLoadingMore(true);
+                                await loadMessages();
+                                setIsLoadingMore(false);
+                            }
+                        }}
+                        components={{
+                            Header: () => (
+                                <>
+                                    {isLoadingMore && (
+                                        <Box p="xs" sx={{display: 'flex', justifyContent: 'center'}}>
+                                            <Loader></Loader>
+                                        </Box>
+                                    )}
+                                    {!hasMore && (
+                                        <Box p="xs" sx={{display: 'flex', justifyContent: 'center'}}>
+          <span style={{fontSize: 13, fontStyle: 'italic', color: theme.colors.gray[5]}}>
+            Début de la conversation
+          </span>
+                                        </Box>
+                                    )}
+                                </>
+                            )
+                        }}
 
-                    <Group mt="xs" grow>
-                        <Textarea
-                            placeholder="Votre message..."
-                            value={input}
-                            minRows={2}
-                            autosize
-                            onChange={(e) => setInput(e.currentTarget.value)}
-                            onKeyDown={(e) => {
-                                if (e.key === "Enter" && !e.shiftKey) {
-                                    e.preventDefault();
-                                    sendMessage();
-                                }
+                    />
+
+                    {showScrollToBottom && (
+                        <ActionIcon
+                            onClick={scrollToBottom}
+                            variant="filled"
+                            color="blue"
+                            radius="xl"
+                            size="lg"
+                            style={{
+                                position: 'absolute',
+                                bottom: 80,
+                                right: "50%",
+                                zIndex: 10,
+                                boxShadow: '0 2px 8px rgba(0,0,0,0.15)'
                             }}
-                        />
-                        <Button onClick={sendMessage}>Envoyer</Button>
+                        >
+                            <IconArrowDown size={20}/>
+                        </ActionIcon>
+                    )}
+
+
+                    <Group mt="xs" spacing={4} align="flex-end" style={{width: '100%'}}>
+                        <Box style={{flexGrow: 1}}>
+                            <Input
+                                placeholder="Votre message..."
+                                value={input}
+                                onChange={(e) => {
+                                    const value = e.currentTarget.value;
+                                    setInput(value);
+                                    if (value.trim().length > 0) {
+                                        if (!isCurrentlyTyping.current) {
+                                            emitTyping();
+                                            isCurrentlyTyping.current = true;
+                                        }
+                                        emitStopTyping();
+                                    } else {
+                                        emitStopTyping.cancel();
+                                        socketRef.current?.emit("stop_typing", {
+                                            conversation_id: conversationId,
+                                            user_id: user?.id,
+                                        });
+                                        isCurrentlyTyping.current = false;
+                                    }
+                                }}
+                                onKeyDown={(e) => {
+                                    if (e.key === "Enter" && !e.shiftKey) {
+                                        e.preventDefault();
+                                        sendMessage();
+                                    }
+                                }}
+                                style={{width: '100%'}}
+                            />
+                        </Box>
+                        <Box mt={4} pb={2}>
+                            <IconSend
+                                onClick={() => {
+                                    if (input.trim()) sendMessage();
+                                }}
+                                size={24}
+                                style={{
+                                    cursor: input.trim() ? "pointer" : "not-allowed",
+                                    color: input.trim() ? theme.colors.blue[6] : "gray",
+                                }}
+                                title={input.trim() ? "Envoyer" : "Saisissez un message"}
+                                stroke={1.5}
+                            />
+                        </Box>
                     </Group>
+
                 </Paper>
             </Box>
 
             <ConfirmModal
-                opened={confirmDeleteId !== null}
-                onClose={() => setConfirmDeleteId(null)}
-                onConfirm={deleteMessage}
-                title="Suppression de message"
+                opened={confirmDeleteOpen}
+                onClose={() => {
+                    setConfirmDeleteOpen(false);
+                    setMessageToDelete(null);
+                }}
+                onConfirm={confirmDeleteMessage}
                 confirmLabel="Supprimer"
-                loading={loadingDelete}
+                cancelLabel="Annuler"
+                loading={deleting}
+                title="Supprimer ce message ?"
             >
-                <Text>
-                    Voulez-vous vraiment supprimer ce message ? Cette action est{" "}
-                    <Text span c="red" fw={500}>irréversible</Text>.
-                </Text>
+                Ce message sera marqué comme supprimé et ne pourra pas être restauré.
             </ConfirmModal>
-
-            <EndAuditModal
-                opened={showFinishModal}
-                onClose={() => setShowFinishModal(false)}
-                onSubmit={handleAuditEnd}
-                loading={endAuditLoading}
-            />
-
         </PageTransition>
     );
 }

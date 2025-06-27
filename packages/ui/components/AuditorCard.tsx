@@ -11,10 +11,10 @@ interface AuditorCardProps {
     onContact: (auditor: any) => void;
 }
 
-export function AuditorCard({ auditor, onContact }: AuditorCardProps) {
+export function AuditorCard({auditor, onContact}: AuditorCardProps) {
     return (
         <Paper shadow="xs" p="md" withBorder>
-            <Group position="apart" mb="xs" style={{ justifyContent: "space-between", alignItems: "center" }}>
+            <Group position="apart" mb="xs" style={{justifyContent: "space-between", alignItems: "center"}}>
                 <Text fw={600}>{auditor.name}</Text>
                 <Button size="xs" onClick={() => onContact(auditor)}>Contacter</Button>
             </Group>

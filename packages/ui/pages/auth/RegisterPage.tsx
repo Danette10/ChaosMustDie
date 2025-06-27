@@ -1,20 +1,9 @@
-import { useState } from "react";
-import {
-    Box,
-    Button,
-    Paper,
-    Tabs,
-    Alert,
-    Title,
-    FloatingIndicator,
-    Divider,
-    Group,
-    Container, Menu
-} from "@mantine/core";
-import { BackButton } from "../../components/BackButton";
+import {useState} from "react";
+import {Alert, Box, Button, Container, Divider, FloatingIndicator, Group, Paper, Tabs, Title} from "@mantine/core";
+import {BackButton} from "../../components/BackButton";
 import axiosInstance from "../../utils/axiosInstance";
 import classes from "../../styles/RegisterPage.module.css";
-import { useNavigate } from "react-router-dom";
+import {useNavigate} from "react-router-dom";
 import RegisterForm from "../../components/RegisterForm";
 
 export default function RegisterPage() {
@@ -40,7 +29,7 @@ export default function RegisterPage() {
 
     const setControlRef = (val: string) => (node: HTMLButtonElement | null) => {
         if (controlsRefs[val] !== node) {
-            setControlsRefs((prev) => ({ ...prev, [val]: node }));
+            setControlsRefs((prev) => ({...prev, [val]: node}));
         }
     };
 
@@ -77,7 +66,7 @@ export default function RegisterPage() {
                     phone_number: form.phone_number,
                     password: form.password
                 }
-                : { ...form };
+                : {...form};
 
         try {
             await axiosInstance.post(endpoint, payload);
@@ -93,43 +82,46 @@ export default function RegisterPage() {
 
     return (
         <Container h="100%" px="md" py="lg">
-            <Paper radius="md" p={0} style={{ display: "flex", flexDirection: "column", height: "100%" }}>
+            <Paper radius="md" p={0} style={{display: "flex", flexDirection: "column", height: "100%"}}>
                 <Tabs
                     value={tab}
                     onChange={(v) => setTab(v as "auditor" | "company")}
                     variant="none"
                     keepMounted={false}
-                    style={{ flex: 1, display: "flex", flexDirection: "column" }}
+                    style={{flex: 1, display: "flex", flexDirection: "column"}}
                 >
                     <Box p="md">
                         <Group justify="space-between" align="center" mt="md">
-                            <BackButton />
+                            <BackButton/>
                             <Title order={3} mb={0}>
                                 Inscription
                             </Title>
-                            <div style={{ width: 32 }} />
+                            <div style={{width: 32}}/>
                         </Group>
                         <Tabs.List ref={setListRef} className={classes.list} mt="md" mb="md">
-                            <Tabs.Tab value="auditor" ref={setControlRef("auditor")} className={classes.tab} style={{ width: "50%", justifyContent: "center" }}>
+                            <Tabs.Tab value="auditor" ref={setControlRef("auditor")} className={classes.tab}
+                                      style={{width: "50%", justifyContent: "center"}}>
                                 Auditeur
                             </Tabs.Tab>
-                            <Tabs.Tab value="company" ref={setControlRef("company")} className={classes.tab} style={{ width: "50%", justifyContent: "center" }}>
+                            <Tabs.Tab value="company" ref={setControlRef("company")} className={classes.tab}
+                                      style={{width: "50%", justifyContent: "center"}}>
                                 Entreprise
                             </Tabs.Tab>
                             {listRef && controlsRefs[tab] && (
-                                <FloatingIndicator target={controlsRefs[tab]} parent={listRef} className={classes.indicator} />
+                                <FloatingIndicator target={controlsRefs[tab]} parent={listRef}
+                                                   className={classes.indicator}/>
                             )}
                         </Tabs.List>
-                        <Divider my="md" />
+                        <Divider my="md"/>
                     </Box>
 
                     <Box px="md" py="sm">
                         <Tabs.Panel value="auditor">
-                            <RegisterForm type="auditor" form={form} setForm={setForm} />
+                            <RegisterForm type="auditor" form={form} setForm={setForm}/>
                         </Tabs.Panel>
 
                         <Tabs.Panel value="company">
-                            <RegisterForm type="company" form={form} setForm={setForm} />
+                            <RegisterForm type="company" form={form} setForm={setForm}/>
                         </Tabs.Panel>
 
                         {error && <Alert color="red" mt="md">{error}</Alert>}

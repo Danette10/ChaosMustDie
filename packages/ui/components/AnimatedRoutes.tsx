@@ -11,6 +11,8 @@ const WelcomePage = lazy(() => import("../pages/WelcomePage"));
 const LoginPage = lazy(() => import("../pages/auth/LoginPage"));
 const RegisterPage = lazy(() => import("../pages/auth/RegisterPage"));
 const ConfirmCode = lazy(() => import("../pages/auth/ConfirmCode"));
+const ForgotPasswordPage = lazy(() => import("../pages/auth/ForgotPasswordPage"));
+const ResetPasswordPage = lazy(() => import("../pages/auth/ResetPasswordPage"));
 const DashboardPage = lazy(() => import("../pages/DashboardPage"));
 const ProfilePage = lazy(() => import("../pages/ProfilePage"));
 const ChatPage = lazy(() => import("../pages/chat/ChatPage"));
@@ -21,27 +23,29 @@ export default function AnimatedRoutes() {
     const location = useLocation();
     const ready = useEnforceConfirmationRedirect();
 
-    if (!ready) return <Loader />;
+    if (!ready) return <Loader/>;
 
     return (
         <AnimatePresence mode="wait">
-            <Suspense fallback={<Loader />}>
+            <Suspense fallback={<Loader/>}>
                 <Routes location={location} key={location.pathname}>
-                    <Route path="/" element={<PageTransition><WelcomePage /></PageTransition>} />
-                    <Route path="/login" element={<PageTransition><LoginPage /></PageTransition>} />
-                    <Route path="/register" element={<PageTransition><RegisterPage /></PageTransition>} />
-                    <Route path="/confirm-code" element={<PageTransition><ConfirmCode /></PageTransition>} />
+                    <Route path="/" element={<PageTransition><WelcomePage/></PageTransition>}/>
+                    <Route path="/login" element={<PageTransition><LoginPage/></PageTransition>}/>
+                    <Route path="/register" element={<PageTransition><RegisterPage/></PageTransition>}/>
+                    <Route path="/confirm-code" element={<PageTransition><ConfirmCode/></PageTransition>}/>
+                    <Route path="/forgot-password" element={<PageTransition><ForgotPasswordPage/></PageTransition>}/>
+                    <Route path="/reset-password" element={<PageTransition><ResetPasswordPage/></PageTransition>}/>
                     <Route
                         element={
                             <AuthGuard>
-                                <Layout />
+                                <Layout/>
                             </AuthGuard>
                         }
                     >
-                        <Route path="/dashboard" element={<PageTransition><DashboardPage /></PageTransition>} />
-                        <Route path="/profile" element={<PageTransition><ProfilePage /></PageTransition>} />
-                        <Route path="/chat/*" element={<PageTransition><ChatPage /></PageTransition>} />
-                        <Route path="/auditors" element={<PageTransition><AllAuditorsPage /></PageTransition>} />
+                        <Route path="/dashboard" element={<PageTransition><DashboardPage/></PageTransition>}/>
+                        <Route path="/profile" element={<PageTransition><ProfilePage/></PageTransition>}/>
+                        <Route path="/chat/*" element={<PageTransition><ChatPage/></PageTransition>}/>
+                        <Route path="/auditors" element={<PageTransition><AllAuditorsPage/></PageTransition>}/>
                         <Route path="/audit/*" element={<PageTransition><AuditPage/></PageTransition>}/>
                     </Route>
                 </Routes>

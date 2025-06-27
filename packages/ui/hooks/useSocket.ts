@@ -1,0 +1,33 @@
+import {useEffect, useRef} from "react";
+import {io, Socket} from "socket.io-client";
+import {useUser} from "../context/UserContext";
+
+export function useSocket() {
+    const {token} = useUser();
+    const socketRef = useRef<Socket | null>(null);
+
+    useEffect(() => {
+        if (!token) return;
+
+        const socket = io("wss://localhost", {
+            auth: {token: token}
+        });
+
+
+        socketRef.current = socket;
+
+        socket.on("connect", () => {
+            console.log("WebSocket connected");
+        });
+
+        socket.on("disconnect", () => {
+            console.log("WebSocket disconnected");
+        });
+
+        return () => {
+            socket.disconnect();
+        };
+    }, [token]);
+
+    return socketRef;
+}

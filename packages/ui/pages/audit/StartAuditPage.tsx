@@ -37,7 +37,7 @@ export default function StartAuditPage() {
     const [hasReport, setHasReport] = useState(false);
 
     if (user?.user_type !== "auditor") {
-        return <Navigate to="/audit" replace />;
+        return <Navigate to="/audit" replace/>;
     }
 
     useEffect(() => {
@@ -194,7 +194,7 @@ export default function StartAuditPage() {
                                 const response = await axiosInstance.get(`/reports/download/${auditId}`, {
                                     responseType: "blob"
                                 });
-                                const blob = new Blob([response.data], { type: "application/pdf" });
+                                const blob = new Blob([response.data], {type: "application/pdf"});
                                 const url = window.URL.createObjectURL(blob);
                                 window.open(url, "_blank");
                                 setTimeout(() => {
@@ -215,7 +215,7 @@ export default function StartAuditPage() {
                 </Alert>
             )}
 
-            <Divider my="md" label="Lancer un audit" labelPosition="center" />
+            <Divider my="md" label="Lancer un audit" labelPosition="center"/>
 
             <Title>Choisir un ou plusieurs types d’audit</Title>
             <Stack>
@@ -320,7 +320,7 @@ export default function StartAuditPage() {
                         {selectedTypes.map(type => (
                             <Group key={type}>
                                 <Text>{AuditTypeLabels[type] || type}</Text>
-                                {auditStatus[type] === "pending" && <Loader size="xs" />}
+                                {auditStatus[type] === "pending" && <Loader size="xs"/>}
                                 {auditStatus[type] === "success" && <Text color="green">✅</Text>}
                                 {auditStatus[type] === "error" && <Text color="red">❌</Text>}
                             </Group>

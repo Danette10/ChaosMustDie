@@ -1,17 +1,17 @@
-import { Outlet, useLocation } from "react-router-dom";
-import { Container } from "@mantine/core";
+import {Outlet, useLocation} from "react-router-dom";
+import {Container} from "@mantine/core";
 import PageTransition from "./PageTransition";
-import { Navbar } from "./Navbar";
+import {Navbar} from "./Navbar";
 
 export default function Layout() {
     const location = useLocation();
 
     return (
-        <div style={{ minHeight: "100vh" }}>
-            <Navbar />
+        <div style={{minHeight: "100vh"}}>
+            <Navbar/>
             <Container py="md">
                 <PageTransition key={location.pathname}>
-                    <Outlet />
+                    <Outlet/>
                 </PageTransition>
             </Container>
         </div>
