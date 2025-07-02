@@ -7,9 +7,19 @@ import {useNavigate} from "react-router-dom";
 import RegisterForm from "../../components/RegisterForm";
 import {RegisterFormData} from "ui/types/RegisterForm";
 
+/**
+ * Composant RegisterPage.
+ *
+ * Ce composant représente la page d'inscription de l'application. Il permet à l'utilisateur
+ * de s'inscrire en tant qu'auditeur ou entreprise. Les informations saisies sont validées
+ * avant d'être envoyées à l'API. En cas de succès, l'utilisateur est redirigé vers la page
+ * de confirmation du code.
+ *
+ * @returns {JSX.Element} Le composant RegisterPage.
+ */
 export default function RegisterPage() {
-    const navigate = useNavigate();
-    const [tab, setTab] = useState<"auditor" | "company">("auditor");
+    const navigate = useNavigate(); // Hook pour naviguer entre les pages.
+    const [tab, setTab] = useState<"auditor" | "company">("auditor"); // État pour gérer l'onglet actif (auditeur ou entreprise).
     const [form, setForm] = useState<RegisterFormData>({
         firstname: "",
         lastname: "",
@@ -22,19 +32,35 @@ export default function RegisterPage() {
         address: "",
         contact_email: "",
         link: ""
-    });
-    const [error, setError] = useState("");
-    const [success, setSuccess] = useState("");
-    const [controlsRefs, setControlsRefs] = useState<Record<string, HTMLButtonElement | null>>({});
-    const [listRef, setListRef] = useState<HTMLDivElement | null>(null);
+    }); // État pour stocker les données du formulaire.
+    const [error, setError] = useState(""); // État pour afficher un message d'erreur.
+    const [success, setSuccess] = useState(""); // État pour afficher un message de succès.
+    const [controlsRefs, setControlsRefs] = useState<Record<string, HTMLButtonElement | null>>({}); // Références des boutons des onglets.
+    const [listRef, setListRef] = useState<HTMLDivElement | null>(null); // Référence à la liste des onglets.
 
+    /**
+     * Fonction pour définir la référence d'un bouton d'onglet.
+     *
+     * @param {string} val - Valeur de l'onglet.
+     * @returns {(node: HTMLButtonElement | null) => void} Fonction pour définir la référence.
+     */
     const setControlRef = (val: string) => (node: HTMLButtonElement | null) => {
         if (controlsRefs[val] !== node) {
             setControlsRefs((prev) => ({...prev, [val]: node}));
         }
     };
 
+    /**
+     * Fonction pour gérer l'inscription de l'utilisateur.
+     * Valide les données du formulaire avant de les envoyer à l'API.
+     */
     const handleRegister = async () => {
+        /**
+         * Fonction pour calculer la force du mot de passe.
+         *
+         * @param {string} password - Le mot de passe à évaluer.
+         * @returns {number} La force du mot de passe (0-100).
+         */
         const getPasswordStrength = (password: string) => {
             let strength = 0;
             if (password.length >= 8) strength += 20;
@@ -45,7 +71,18 @@ export default function RegisterPage() {
             return strength;
         };
 
+        /**
+         * Vérifie si le mot de passe est valide.
+         *
+         * @returns {boolean} `true` si le mot de passe est valide, sinon `false`.
+         */
         const isPasswordValid = () => getPasswordStrength(form.password) === 100;
+
+        /**
+         * Vérifie si le mot de passe et sa confirmation correspondent.
+         *
+         * @returns {boolean} `true` si les mots de passe correspondent, sinon `false`.
+         */
         const isConfirmValid = form.password === form.confirm_password;
 
         if (!isPasswordValid()) {

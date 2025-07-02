@@ -1,69 +1,124 @@
-import React, {useState} from "react";
+import {useState} from "react";
 import {useNavigate} from "react-router-dom";
-import axiosInstance from "../../utils/axiosInstance";
-import {Alert, Box, Button, Center, Group, Paper, Stack, TextInput, Title} from "@mantine/core";
+import {motion} from "framer-motion";
+import {Alert, Box, Button, Center, Group, Paper, PinInput, Text, Title} from "@mantine/core";
+import {IconCheck, IconX} from "@tabler/icons-react";
 import {BackButton} from "ui/components/BackButton";
+import axiosInstance from "../../utils/axiosInstance";
 
-export default function ForgotPasswordPage() {
-    const [email, setEmail] = useState("");
-    const [success, setSuccess] = useState("");
-    const [error, setError] = useState("");
-    const navigate = useNavigate();
+/**
+ * Composant ConfirmCode.
+ *
+ * Ce composant permet à l'utilisateur de confirmer son compte en saisissant un code de confirmation.
+ * Il inclut des fonctionnalités pour valider le code, renvoyer un nouveau code, et afficher des messages
+ * de succès ou d'erreur.
+ *
+ * @returns {JSX.Element} Le composant ConfirmCode.
+ */
+export default function ConfirmCode() {
+    const [code, setCode] = useState(""); // État pour stocker le code de confirmation saisi par l'utilisateur.
+    const [success, setSuccess] = useState(""); // État pour afficher un message de succès.
+    const [error, setError] = useState(""); // État pour afficher un message d'erreur.
+    const navigate = useNavigate(); // Hook pour naviguer entre les pages.
 
-    const handleSubmit = async (e: React.FormEvent) => {
-        e.preventDefault();
-        setSuccess("");
-        setError("");
+    const [submitting, setSubmitting] = useState(false); // État indiquant si une soumission est en cours.
+
+    /**
+     * Fonction pour valider le code de confirmation.
+     * Envoie une requête à l'API pour confirmer le compte.
+     */
+    const handleConfirm = async () => {
+        setSubmitting(true);
+        try {
+            await axiosInstance.post("/auth/confirm-code", {code});
+            setSuccess("Compte confirmé avec succès");
+            setError("");
+            localStorage.removeItem("pending_confirmation_email");
+            setTimeout(() => navigate("/login"), 1500);
+        } catch {
+            setError("Code invalide ou expiré");
+            setSuccess("");
+        } finally {
+            setSubmitting(false);
+        }
+    };
+
+    /**
+     * Fonction pour renvoyer un nouveau code de confirmation.
+     * Envoie une requête à l'API pour renvoyer le code à l'adresse email enregistrée.
+     */
+    const handleResend = async () => {
+        const email = localStorage.getItem("pending_confirmation_email");
+        if (!email) {
+            setError("Impossible de renvoyer le code : email introuvable");
+            return;
+        }
 
         try {
-            await axiosInstance.post("/auth/forgot-password", {email});
-            setSuccess("Si cet email existe, un lien de réinitialisation a été envoyé.");
-        } catch (err: any) {
-            console.error(err);
-            setError(err.response?.data?.message || "Erreur lors de la demande.");
+            await axiosInstance.post("/auth/resend-code", {email});
+            setSuccess("Code renvoyé par email");
+            setError("");
+        } catch {
+            setError("Erreur lors de l'envoi du code");
+            setSuccess("");
         }
     };
 
     return (
-        <Center h="100vh" px="md">
-            <Paper shadow="md" radius="md" p="xl" style={{width: "100%"}}>
-                <Group justify="space-between" align="center" mb="md">
-                    <BackButton/>
-                    <Title order={2} ta="center" m={0}>
-                        Mot de passe oublié
-                    </Title>
-                    <Box/>
-                </Group>
+        <motion.div
+            initial={{opacity: 0, x: 50}}
+            animate={{opacity: 1, x: 0}}
+            exit={{opacity: 0, x: -50}}
+            transition={{duration: 0.3}}
+        >
+            <Center h="100vh" px="md">
+                <Paper w={360} p="lg" radius="md" shadow="sm">
+                    <Group justify="space-between" align="center" mb="md">
+                        <BackButton/>
+                        <Title order={3} m={0}>
+                            Confirmation du compte
+                        </Title>
+                        <Box w={32}/>
+                    </Group>
 
-                {success && (
-                    <Alert color="green" mb="sm">
-                        {success}
-                    </Alert>
-                )}
+                    {error && (
+                        <Alert color="red" icon={<IconX size={16}/>} mb="sm">
+                            {error}
+                        </Alert>
+                    )}
+                    {success && (
+                        <Alert color="green" icon={<IconCheck size={16}/>} mb="sm">
+                            {success}
+                        </Alert>
+                    )}
 
-                {error && (
-                    <Alert color="red" mb="sm">
-                        {error}
-                    </Alert>
-                )}
+                    <PinInput
+                        length={6}
+                        value={code}
+                        onChange={setCode}
+                        onComplete={handleConfirm}
+                        type="alphanumeric"
+                        inputMode="numeric"
+                        oneTimeCode
+                        autoFocus
+                        size="lg"
+                        mb="md"
+                        disabled={submitting}
+                        style={{display: "flex", justifyContent: "center", gap: 8}}
+                    />
 
-                <form onSubmit={handleSubmit}>
-                    <Stack>
-                        <TextInput
-                            label="Email"
-                            placeholder="Votre email"
-                            type="email"
-                            value={email}
-                            onChange={(e) => setEmail(e.currentTarget.value)}
-                            required
-                        />
+                    <Button fullWidth onClick={handleConfirm} loading={submitting}>
+                        Valider le code
+                    </Button>
 
-                        <Button type="submit" fullWidth>
-                            Envoyer la demande
+                    <Text size="sm" ta="center" mt="xs" mb="md">
+                        Vous n'avez pas reçu le code ou il a expiré ?{" "}
+                        <Button variant="subtle" size="xs" onClick={handleResend}>
+                            Renvoyer le code
                         </Button>
-                    </Stack>
-                </form>
-            </Paper>
-        </Center>
+                    </Text>
+                </Paper>
+            </Center>
+        </motion.div>
     );
-}
+};

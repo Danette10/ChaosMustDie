@@ -6,12 +6,25 @@ import {useUser} from "ui/context/UserContext";
 import {statusColors, statusLabels} from "ui/constants/auditStatus";
 import {formatDateTimeFR} from "ui/utils/dateUtils";
 
+/**
+ * Composant AuditViewPage.
+ *
+ * Ce composant affiche les détails d'un audit spécifique, y compris les informations sur l'entreprise auditée
+ * ou l'auditeur, la date de l'audit, le statut, et un commentaire. Il permet également de télécharger un rapport
+ * PDF si disponible et autorisé.
+ *
+ * @returns {JSX.Element} Le composant AuditViewPage.
+ */
 export function AuditViewPage() {
-    const {id} = useParams();
-    const {user} = useUser();
-    const [audit, setAudit] = useState<any | null>(null);
-    const [loading, setLoading] = useState(true);
+    const {id} = useParams(); // Récupère l'ID de l'audit depuis les paramètres de l'URL.
+    const {user} = useUser(); // Récupère les informations de l'utilisateur depuis le contexte.
+    const [audit, setAudit] = useState<any | null>(null); // État pour stocker les données de l'audit.
+    const [loading, setLoading] = useState(true); // État pour indiquer si les données sont en cours de chargement.
 
+    /**
+     * Effet pour récupérer les détails de l'audit depuis l'API.
+     * Exécuté lorsque l'ID de l'audit change.
+     */
     useEffect(() => {
         const fetchAudit = async () => {
             try {
@@ -29,12 +42,19 @@ export function AuditViewPage() {
         }
     }, [id]);
 
+    // Affiche un loader pendant le chargement des données.
     if (loading) return <Loader/>;
+    // Affiche un message d'erreur si l'audit est introuvable.
     if (!audit) return <Text c="red">Audit introuvable</Text>;
 
-    const isAuditor = user?.user_type === "auditor";
-    const isCompany = user?.user_type === "company";
+    const isAuditor = user?.user_type === "auditor"; // Vérifie si l'utilisateur est un auditeur.
+    const isCompany = user?.user_type === "company"; // Vérifie si l'utilisateur est une entreprise.
 
+    /**
+     * Vérifie si l'utilisateur peut télécharger le rapport PDF.
+     * Les auditeurs peuvent télécharger si l'audit leur appartient.
+     * Les entreprises peuvent télécharger si l'audit leur appartient.
+     */
     const canDownload =
         audit.file_path &&
         ((isAuditor && user.id === audit.auditor.id) ||

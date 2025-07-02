@@ -18,25 +18,45 @@ import MultiFilter from "./MultiFilter";
 import {statusColors, statusLabels} from "../constants/auditStatus";
 import {formatDateTimeFR} from "../utils/dateUtils";
 
+/**
+ * Props for the AuditList component.
+ *
+ * @interface AuditListProps
+ * @property {number} [limit] - Maximum number of audits to display.
+ * @property {string[]} [statusFilter] - Array of statuses to filter audits.
+ */
 interface AuditListProps {
     limit?: number;
     statusFilter?: string[];
 }
 
+/**
+ * AuditList Component
+ *
+ * This component displays a list of audits with filtering, pagination, and dynamic styling.
+ * It fetches audit data from the server and allows users to interact with individual audits based on their status.
+ *
+ * @param {AuditListProps} props - Props for the component.
+ * @returns {JSX.Element} The rendered audit list.
+ */
 export function AuditList({limit, statusFilter}: AuditListProps) {
-    const {user} = useUser();
-    const navigate = useNavigate();
-    const theme = useMantineTheme();
-    const colorScheme = useComputedColorScheme();
-    const isDark = colorScheme === "dark";
+    const {user} = useUser(); // Retrieves the current user context.
+    const navigate = useNavigate(); // Navigation hook for routing.
+    const theme = useMantineTheme(); // Mantine theme object for styling.
+    const colorScheme = useComputedColorScheme(); // Detects the current color scheme (light/dark).
+    const isDark = colorScheme === "dark"; // Boolean indicating if the theme is dark.
 
-    const [audits, setAudits] = useState<any[]>([]);
-    const [filtered, setFiltered] = useState<any[]>([]);
-    const [selectedStatuses, setSelectedStatuses] = useState<string[]>([]);
-    const [loading, setLoading] = useState(true);
-    const [currentPage, setCurrentPage] = useState(1);
-    const itemsPerPage = 10;
+    const [audits, setAudits] = useState<any[]>([]); // State for storing all audits.
+    const [filtered, setFiltered] = useState<any[]>([]); // State for storing filtered audits.
+    const [selectedStatuses, setSelectedStatuses] = useState<string[]>([]); // State for selected statuses in the filter.
+    const [loading, setLoading] = useState(true); // State for loading indicator.
+    const [currentPage, setCurrentPage] = useState(1); // State for current page in pagination.
+    const itemsPerPage = 10; // Number of items per page.
 
+    /**
+     * Fetches audits from the server and updates the state.
+     * Runs once when the component is mounted.
+     */
     useEffect(() => {
         const fetchAudits = async () => {
             try {
@@ -60,6 +80,10 @@ export function AuditList({limit, statusFilter}: AuditListProps) {
         fetchAudits();
     }, []);
 
+    /**
+     * Filters audits based on selected statuses and props.
+     * Updates the filtered audits whenever dependencies change.
+     */
     useEffect(() => {
         let base = [...audits];
 
@@ -75,15 +99,16 @@ export function AuditList({limit, statusFilter}: AuditListProps) {
         setCurrentPage(1);
     }, [selectedStatuses, audits, statusFilter]);
 
-    const finalList = limit ? filtered.slice(0, limit) : filtered;
-    const paginated = finalList.slice((currentPage - 1) * itemsPerPage, currentPage * itemsPerPage);
-    const totalPages = Math.ceil(finalList.length / itemsPerPage);
+    const finalList = limit ? filtered.slice(0, limit) : filtered; // Applies limit to the filtered audits.
+    const paginated = finalList.slice((currentPage - 1) * itemsPerPage, currentPage * itemsPerPage); // Paginates the audits.
+    const totalPages = Math.ceil(finalList.length / itemsPerPage); // Calculates total pages for pagination.
 
+    // Displays a loader while data is being fetched.
     if (loading) return <Loader/>;
 
     return (
         <Stack gap="xl">
-
+            {/* Filter section for audit statuses */}
             {!limit && (
                 <Paper shadow="sm" p="lg" withBorder>
                     <Title order={4} mb="sm">Filtres par statut</Title>
@@ -97,6 +122,7 @@ export function AuditList({limit, statusFilter}: AuditListProps) {
                 </Paper>
             )}
 
+            {/* Grid displaying audits */}
             <SimpleGrid cols={{base: 1, md: 2}} spacing="md">
                 {paginated.map((audit) => {
                     const isAuditor = user?.user_type === "auditor";
@@ -154,6 +180,7 @@ export function AuditList({limit, statusFilter}: AuditListProps) {
                 })}
             </SimpleGrid>
 
+            {/* Pagination controls */}
             {!limit && totalPages > 1 && (
                 <div style={{display: "flex", justifyContent: "center"}}>
                     <Pagination

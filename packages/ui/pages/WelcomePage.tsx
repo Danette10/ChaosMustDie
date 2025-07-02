@@ -4,10 +4,23 @@ import {Box, Button, Center, Stack, Text, Title} from "@mantine/core";
 import PageTransition from "../components/PageTransition";
 import {useUser} from "../context/UserContext";
 
+/**
+ * Composant WelcomePage.
+ *
+ * Ce composant représente la page d'accueil pour les utilisateurs non connectés.
+ * Il affiche des options pour se connecter ou s'inscrire, et redirige les utilisateurs connectés
+ * vers le tableau de bord.
+ *
+ * @returns {JSX.Element} Le composant WelcomePage.
+ */
 export default function WelcomePage() {
-    const {user, loading} = useUser();
-    const navigate = useNavigate();
+    const {user, loading} = useUser(); // Récupère les informations de l'utilisateur et l'état de chargement depuis le contexte.
+    const navigate = useNavigate(); // Hook pour naviguer entre les pages.
 
+    /**
+     * Effet pour rediriger les utilisateurs connectés vers le tableau de bord.
+     * Ce hook s'exécute lorsque l'état de chargement ou les informations utilisateur changent.
+     */
     useEffect(() => {
         if (!loading && user) {
             navigate("/dashboard");
