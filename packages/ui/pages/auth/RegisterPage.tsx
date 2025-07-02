@@ -1,17 +1,18 @@
 import {useState} from "react";
 import {Alert, Box, Button, Container, Divider, FloatingIndicator, Group, Paper, Tabs, Title} from "@mantine/core";
-import {BackButton} from "../../components/BackButton";
+import {BackButton} from "ui/components/BackButton";
 import axiosInstance from "../../utils/axiosInstance";
-import classes from "../../styles/RegisterPage.module.css";
+import classes from "@styles/RegisterPage.module.css";
 import {useNavigate} from "react-router-dom";
 import RegisterForm from "../../components/RegisterForm";
+import {RegisterFormData} from "ui/types/RegisterForm";
 
 export default function RegisterPage() {
     const navigate = useNavigate();
     const [tab, setTab] = useState<"auditor" | "company">("auditor");
-    const [form, setForm] = useState({
-        first_name: "",
-        last_name: "",
+    const [form, setForm] = useState<RegisterFormData>({
+        firstname: "",
+        lastname: "",
         email: "",
         phone_number: "",
         password: "",
@@ -60,8 +61,8 @@ export default function RegisterPage() {
         const payload =
             tab === "auditor"
                 ? {
-                    first_name: form.first_name,
-                    last_name: form.last_name,
+                    firstname: form.firstname,
+                    lastname: form.lastname,
                     email: form.email,
                     phone_number: form.phone_number,
                     password: form.password

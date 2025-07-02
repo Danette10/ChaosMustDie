@@ -14,7 +14,7 @@ import {
 import {useNavigate} from "react-router-dom";
 import PageTransition from "../../components/PageTransition";
 import axiosInstance from "../../utils/axiosInstance";
-import {useSocket} from "../../hooks/useSocket";
+import {useSocket} from "ui/hooks/useSocket";
 import {motion} from "framer-motion";
 
 export default function ChatListPage() {
@@ -28,17 +28,23 @@ export default function ChatListPage() {
     const socketRef = useSocket();
 
     useEffect(() => {
-        axiosInstance.get("/chat/conversations")
-            .then((res) => {
+        const fetchConversations = async () => {
+            try {
+                const res = await axiosInstance.get("/chat/conversations");
                 setConversations(res.data);
                 if (socketRef.current) {
                     socketRef.current.emit("join_conversations_bulk", {
                         conversation_ids: res.data.map((c: any) => c.id),
                     });
                 }
-            })
-            .catch(console.error)
-            .finally(() => setLoading(false));
+            } catch (err) {
+                console.error(err);
+            } finally {
+                setLoading(false);
+            }
+        };
+
+        fetchConversations();
     }, [socketRef]);
 
     useEffect(() => {
@@ -103,11 +109,11 @@ export default function ChatListPage() {
         socketRef.current.on("message_deleted", handleMessageDeleted);
 
         return () => {
-            socketRef.current.off("typing", handleTyping);
-            socketRef.current.off("stop_typing", handleStopTyping);
-            socketRef.current.off("new_message", handleNewMessage);
-            socketRef.current.off("message_read", handleMessageRead);
-            socketRef.current.off("message_deleted", handleMessageDeleted);
+            socketRef.current?.off("typing", handleTyping);
+            socketRef.current?.off("stop_typing", handleStopTyping);
+            socketRef.current?.off("new_message", handleNewMessage);
+            socketRef.current?.off("message_read", handleMessageRead);
+            socketRef.current?.off("message_deleted", handleMessageDeleted);
         };
     }, [socketRef]);
 
@@ -124,7 +130,7 @@ export default function ChatListPage() {
                     {loading ? (
                         <Loader/>
                     ) : (
-                        <Stack spacing="xs">
+                        <Stack gap="xs">
                             {conversations.map((conv: any) => (
                                 <Paper
                                     key={conv.id}
@@ -151,8 +157,8 @@ export default function ChatListPage() {
                                         (e.currentTarget.style.background = isDark ? theme.colors.dark[7] : theme.white)
                                     }
                                 >
-                                    <Stack spacing={4}>
-                                        <Group position="apart"
+                                    <Stack gap={4}>
+                                        <Group justify="space-between"
                                                style={{justifyContent: "space-between", alignItems: "center"}}>
                                             <Text fw={500}>{conv.name}</Text>
                                             <Text size="sm">
@@ -162,10 +168,10 @@ export default function ChatListPage() {
                                             </Text>
                                         </Group>
 
-                                        <Group position="apart">
+                                        <Group justify="space-between">
                                             <Text
                                                 size="md"
-                                                color="dimmed"
+                                                c="dimmed"
                                                 component="span"
                                                 style={{
                                                     overflow: "hidden",

@@ -1,11 +1,12 @@
 import {Dispatch, SetStateAction} from "react";
 import {PasswordInput, Progress, Stack, TextInput} from "@mantine/core";
+import {RegisterFormData} from "ui/types/RegisterForm";
 
-interface Props {
+type Props = {
     type: "auditor" | "company";
-    form: Record<string, string>;
-    setForm: Dispatch<SetStateAction<Record<string, string>>>;
-}
+    form: RegisterFormData;
+    setForm: Dispatch<SetStateAction<RegisterFormData>>;
+};
 
 export default function RegisterForm({type, form, setForm}: Props) {
     const handleChange = (e: React.ChangeEvent<HTMLInputElement>) => {
@@ -26,8 +27,8 @@ export default function RegisterForm({type, form, setForm}: Props) {
 
     return (
         <Stack>
-            <TextInput name="first_name" label="Prénom" value={form.first_name} onChange={handleChange} required/>
-            <TextInput name="last_name" label="Nom" value={form.last_name} onChange={handleChange} required/>
+            <TextInput name="firstname" label="Prénom" value={form.firstname} onChange={handleChange} required/>
+            <TextInput name="lastname" label="Nom" value={form.lastname} onChange={handleChange} required/>
             <TextInput name="email" label="Email" type="email" value={form.email} onChange={handleChange} required/>
             <TextInput name="phone_number" label="Téléphone" type="tel" value={form.phone_number}
                        onChange={handleChange} required/>

@@ -1,4 +1,5 @@
-import React, {useCallback, useEffect, useReducer, useRef, useState} from 'react';
+import * as React from 'react';
+import {useCallback, useEffect, useReducer, useRef, useState} from 'react';
 import {debounce} from 'lodash';
 import {useNavigate, useParams} from 'react-router-dom';
 import {
@@ -16,18 +17,19 @@ import {
 import {Virtuoso, VirtuosoHandle} from 'react-virtuoso';
 import PageTransition from '../../components/PageTransition';
 import axiosInstance from '../../utils/axiosInstance';
-import {BackButton} from '../../components/BackButton';
-import {useUser} from '../../context/UserContext';
-import {useSocket} from '../../hooks/useSocket';
+import {BackButton} from 'ui/components/BackButton';
+import {User, useUser} from 'ui/context/UserContext';
+import {useSocket} from 'ui/hooks/useSocket';
 import ConfirmModal from "../../modals/ConfirmModal";
 import {MessageItem} from './components/MessageItem';
 import {TypingIndicator} from './components/TypingIndicator';
-import {Message, MessageAction, messageReducer} from './components/messageReducer';
+import {Message, messageReducer} from './components/messageReducer';
 import {IconArrowDown, IconSend} from '@tabler/icons-react';
-import {Loader} from "../../components/Loader";
+import {Loader} from "ui/components/Loader";
 import EndAuditModal from "../../modals/EndAuditModal";
 import {notifications} from "@mantine/notifications";
-import {UserTypeEnum} from "../../enum/UserTypeEnum";
+import {UserTypeEnum} from "ui/enum/UserTypeEnum";
+import {Audit, AuditRequestedPayload, AuditSocketPayload} from "ui/types/audit";
 
 export default function ChatConversationPage() {
     const {conversationId} = useParams();
@@ -40,21 +42,19 @@ export default function ChatConversationPage() {
     const isCurrentlyTyping = useRef(false);
 
     const [input, setInput] = useState('');
-    const [partner, setPartner] = useState(null);
+    const [partner, setPartner] = useState<User | null>(null);
     const [typingUser, setTypingUser] = useState(false);
-    const [hoveredMessageId, setHoveredMessageId] = useState(null);
+    const [hoveredMessageId, setHoveredMessageId] = useState<number | null>(null);
     const [messageToDelete, setMessageToDelete] = useState<number | null>(null);
     const [confirmDeleteOpen, setConfirmDeleteOpen] = useState(false);
     const [deleting, setDeleting] = useState(false);
     const [showScrollToBottom, setShowScrollToBottom] = useState(false);
     const virtuosoRef = useRef<VirtuosoHandle | null>(null);
 
-    const [messages, dispatch] = useReducer<React.Reducer<Message[], MessageAction>>(messageReducer, []);
+    const [messages, dispatch] = useReducer(messageReducer, [] as Message[]);
     const [followOutput, setFollowOutput] = useState<'smooth' | false>('smooth');
     const containerRef = useRef<HTMLDivElement | null>(null);
-    const [auditStatus, setAuditStatus] = useState<string | null>(null);
 
-    const prevLengthRef = useRef(0);
     const isAtBottomRef = useRef(true);
 
     const LIMIT = 20;
@@ -62,12 +62,12 @@ export default function ChatConversationPage() {
     const [hasMore, setHasMore] = useState(true);
     const [isLoadingMore, setIsLoadingMore] = useState(false);
     const [firstItemIndex, setFirstItemIndex] = useState(0);
-    const [audit, setAudit] = useState(null);
+    const [audit, setAudit] = useState<Partial<Audit> | null>(null);
     const [showFinishModal, setShowFinishModal] = useState(false);
     const [endAuditLoading, setEndAuditLoading] = useState(false);
     const lastScrollTopRef = useRef(0);
 
-    const formatTimestamp = useCallback((timestamp) => {
+    const formatTimestamp = useCallback((timestamp: string | number) => {
         const date = new Date(timestamp);
         return `le ${date.toLocaleDateString("fr-FR")} à ${date.toLocaleTimeString("fr-FR")}`;
     }, []);
@@ -89,7 +89,7 @@ export default function ChatConversationPage() {
         setEndAuditLoading(true);
         try {
             const formData = new FormData();
-            formData.append("auditor_id", user.id.toString());
+            formData.append("auditor_id", user?.id.toString()!);
             formData.append("company_id", partner?.company?.id?.toString() || "");
             formData.append("success", data.success.toString());
             formData.append("comment", data.comment);
@@ -103,12 +103,6 @@ export default function ChatConversationPage() {
             }
 
             await axiosInstance.post("/audit/finish", formData);
-
-            notifications.show({
-                title: "Audit terminé",
-                message: "L’audit a été terminé avec succès.",
-                color: "green",
-            });
 
             setAudit({...audit, status: "completed"});
             setShowFinishModal(false);
@@ -129,8 +123,8 @@ export default function ChatConversationPage() {
 
         const auditor_id = user.user_type === UserTypeEnum.COMPANY ? partner.id : user.id;
         const company_id = user.user_type === UserTypeEnum.COMPANY
-            ? user.company.id
-            : partner?.company?.id;
+            ? user.company?.id
+            : partner.company?.id;
 
         if (!auditor_id || !company_id) {
             console.warn("Impossible d'envoyer la réponse à l’audit : ID manquant");
@@ -146,14 +140,12 @@ export default function ChatConversationPage() {
         try {
             const res = await axiosInstance.patch("/audit/respond", formData);
 
-            // ✅ Mise à jour locale immédiate
             if (action === "accept" && res.data?.audit_id) {
                 setAudit({id: res.data.audit_id, status: "in_progress"});
             } else if (action === "refuse") {
                 setAudit(null);
             }
 
-            setAuditStatus(action === "accept" ? "in_progress" : null);
         } catch (err) {
             console.error(`Erreur lors de l’audit ${action}:`, err);
         }
@@ -169,7 +161,7 @@ export default function ChatConversationPage() {
             const res = await axiosInstance.get("/audit/status", {
                 params: {auditor_id: partner?.id, company_id: user?.company?.id}
             });
-            setAudit({status: "pending"});
+            setAudit({id: res.data.audit_id, status: "pending"});
             setInput('');
             socketRef.current?.emit("stop_typing", {conversation_id: conversationId, user_id: user?.id});
             emitStopTyping.cancel();
@@ -192,10 +184,9 @@ export default function ChatConversationPage() {
             setOffset((prev) => prev + newMessages.length);
             setHasMore(res.data.has_more);
             setPartner(res.data.partner);
-            setAudit(res.data.audit);
+            setAudit((prev) => res.data.audit ?? prev);
 
             if (initial) {
-                // ✅ Chargement initial
                 setFirstItemIndex(0);
                 dispatch({
                     type: 'SET_MESSAGES',
@@ -209,30 +200,25 @@ export default function ChatConversationPage() {
                     });
                 }, 50);
             } else {
-                // ✅ Chargement supplémentaire (scroll vers le haut)
 
-                // ⚠️ On attend le DOM pour récupérer le scroll container
                 requestAnimationFrame(() => {
                     const scrollContainer = containerRef.current?.querySelector('[data-virtuoso-scroller="true"]') as HTMLElement | null;
 
                     if (!scrollContainer) {
-                        console.warn("⚠️ scrollContainer introuvable");
+                        console.warn("scrollContainer introuvable");
                         return;
                     }
 
                     const prevScrollHeight = scrollContainer.scrollHeight;
                     const prevScrollTop = scrollContainer.scrollTop;
 
-                    // 1. Ajout des nouveaux messages (prepend)
                     dispatch({
                         type: 'SET_MESSAGES',
                         payload: (prev) => [...newMessages, ...prev]
                     });
 
-                    // 2. Mise à jour de l’index
                     setFirstItemIndex((prev) => prev + newMessages.length);
 
-                    // 3. Compensation du scroll
                     requestAnimationFrame(() => {
                         const updatedScrollContainer = containerRef.current?.querySelector('[data-virtuoso-scroller="true"]') as HTMLElement | null;
                         if (!updatedScrollContainer) return;
@@ -262,7 +248,7 @@ export default function ChatConversationPage() {
         if (!conversationId || !socketRef.current) return;
         const socket = socketRef.current;
 
-        const handleNewMessage = (message) => {
+        const handleNewMessage = async (message: Message) => {
             if (parseInt(conversationId) === message.conversation_id) {
                 const isMine = message.sender_id === user?.id;
                 if (isMine) return;
@@ -272,16 +258,21 @@ export default function ChatConversationPage() {
                         id: message.id,
                         from: "other",
                         sender_id: message.sender_id,
+                        conversation_id: message.conversation_id,
                         deleted: false,
                         content: message.content,
                         timestamp: message.timestamp
                     }
                 });
-                axiosInstance.post(`/chat/conversations/${conversationId}/read`).catch(console.error);
+                try {
+                    await axiosInstance.post(`/chat/conversations/${conversationId}/read`);
+                } catch (err) {
+                    console.error(err);
+                }
             }
         };
 
-        const handleDeletedMessage = (data) => {
+        const handleDeletedMessage = (data: { conversation_id: number; message_id: number; deleted_at: string }) => {
             if (parseInt(conversationId) !== data.conversation_id) return;
             dispatch({
                 type: 'SET_MESSAGES',
@@ -299,13 +290,17 @@ export default function ChatConversationPage() {
             });
         };
 
-        const handleAuditRequested = (data) => {
+        const handleAuditRequested = (data: AuditRequestedPayload) => {
+            if (data.conversation_id !== conversationId) return;
+
             if (data.auditor_id === user?.id || data.company_id === user?.company?.id) {
-                setAudit({status: "pending"});
+                setAudit({
+                    status: "pending"
+                });
             }
 
-            const isFromMe = data.emitted_by === user?.id;
-            
+            const isFromMe = Number(data.emitted_by) === Number(user?.id);
+
             if (!isFromMe) {
                 notifications.show({
                     title: "Nouvelle demande d'audit",
@@ -322,38 +317,46 @@ export default function ChatConversationPage() {
             }
         };
 
-        const handleAuditAccepted = (data) => {
+        const handleAuditAccepted = (data: AuditSocketPayload) => {
             if (data.auditor_id === user?.id || data.company_id === user?.company?.id) {
-                setAudit({id: data.audit_id, status: "in_progress"});
+                setAudit(prev => ({...prev, id: data.audit_id, status: "in_progress"}));
             }
+
+            const isFromMe = Number(data.emitted_by) === Number(user?.id);
 
             notifications.show({
                 title: "Audit accepté",
-                message: "Votre demande d’audit a été acceptée.",
+                message: isFromMe ? "Vous avez accepté la demande d’audit." : "Votre demande d’audit a été acceptée.",
                 color: "green",
+                icon: <IconSend size={16}/>,
             });
         };
 
-        const handleAuditRefused = (data) => {
-            if (data.auditor_id === partner?.id && data.company_id === user?.company?.id) {
-                setAudit({id: data.audit_id, status: "refused"});
+        const handleAuditRefused = (data: AuditSocketPayload) => {
+            if (data.auditor_id === user?.id || data.company_id === user?.company?.id) {
+                setAudit(prev => ({...prev, id: data.audit_id, status: "refused"}));
             }
+
+            const isFromMe = Number(data.emitted_by) === Number(user?.id);
 
             notifications.show({
                 title: "Audit refusé",
-                message: "Votre demande d’audit a été refusée.",
+                message: isFromMe ? "Vous avez refusé la demande d’audit." : "Votre demande d’audit a été refusée.",
                 color: "red",
+                icon: <IconSend size={16}/>,
             });
         };
 
-        const handleAuditFinished = (data) => {
+        const handleAuditFinished = (data: AuditSocketPayload) => {
             if (data.auditor_id === user?.id || data.company_id === user?.company?.id) {
-                setAudit({id: data.audit_id, status: "completed"});
+                setAudit(prev => ({...prev, id: data.audit_id, status: data.status}));
             }
+
+            const isFromMe = Number(data.emitted_by) === Number(user?.id);
 
             notifications.show({
                 title: "Audit terminé",
-                message: "L’audit a été terminé.",
+                message: isFromMe ? "Vous avez terminé l’audit." : "Votre audit a été terminé.",
                 color: "blue",
             });
         };
@@ -403,10 +406,9 @@ export default function ChatConversationPage() {
             }
 
             try {
-                const res = await axiosInstance.get("/audit/status", {
+                await axiosInstance.get("/audit/status", {
                     params: {auditor_id, company_id},
                 });
-                setAuditStatus(res.data.status);
             } catch (err) {
                 console.error("Erreur récupération statut audit :", err);
             }
@@ -466,8 +468,8 @@ export default function ChatConversationPage() {
         }
     };
 
-    const handleScroll = useCallback((e) => {
-        const {scrollTop, scrollHeight, clientHeight} = e.target;
+    const handleScroll = useCallback((e: React.UIEvent<HTMLDivElement>) => {
+        const {scrollTop, scrollHeight, clientHeight} = e.currentTarget;
 
         const distanceFromBottom = scrollHeight - scrollTop - clientHeight;
         setShowScrollToBottom((prev) => {
@@ -478,7 +480,6 @@ export default function ChatConversationPage() {
         const isScrollingUp = scrollTop < lastScrollTopRef.current;
         lastScrollTopRef.current = scrollTop;
 
-        // ⚠️ Scroll haut + direction vers le haut + proche du haut
         if (isScrollingUp && scrollTop < 200 && hasMore && !isLoadingMore) {
             setIsLoadingMore(true);
             loadMessages().finally(() => {
@@ -488,6 +489,7 @@ export default function ChatConversationPage() {
     }, [hasMore, isLoadingMore, loadMessages]);
 
 
+
     const scrollToBottom = () => {
         virtuosoRef.current?.scrollToIndex({index: messages.length - 1, behavior: 'smooth'});
     };
@@ -495,8 +497,8 @@ export default function ChatConversationPage() {
     return (
         <PageTransition>
             <Box p="md">
-                <Group position="apart" mb="xs">
-                    <Group spacing="sm">
+                <Group justify="space-between" mb="xs">
+                    <Group gap="sm">
                         <BackButton onClick={() => {
                             socketRef.current?.emit("stop_typing", {
                                 conversation_id: conversationId,
@@ -504,8 +506,10 @@ export default function ChatConversationPage() {
                             });
                             navigate(-1);
                         }}/>
-                        <Title order={3}>{partner ? `${partner.firstname} ${partner.lastname}` : "Conversation"}</Title>
-                        <Group spacing="sm">
+                        <Title order={3}>
+                            {partner ? `${partner.firstname} ${partner.lastname}` : "Conversation"}
+                        </Title>
+                        <Group gap="sm">
                             {user?.user_type === UserTypeEnum.COMPANY && (
                                 <>
                                     {audit?.status === "in_progress" && (
@@ -516,11 +520,7 @@ export default function ChatConversationPage() {
                                         <Badge color="yellow">Demande envoyée</Badge>
                                     )}
 
-                                    {audit?.status === "completed" && (
-                                        <Badge color="gray">Audit terminé</Badge>
-                                    )}
-
-                                    {(!audit || audit?.status === "completed" || audit?.status === "failed") && (
+                                    {(audit?.status === "completed" || audit?.status === "failed" || audit?.status === "refused") && (
                                         <Button size="xs" variant="light" onClick={handleRequestAudit}>
                                             Demander un audit
                                         </Button>
@@ -531,7 +531,7 @@ export default function ChatConversationPage() {
                             {user?.user_type === UserTypeEnum.AUDITOR && (
                                 <>
                                     {audit?.status === "pending" && (
-                                        <Group spacing={4}>
+                                        <Group gap={4}>
                                             <Button
                                                 size="xs"
                                                 color="green"
@@ -552,7 +552,7 @@ export default function ChatConversationPage() {
                                     )}
 
                                     {audit?.status === "in_progress" && (
-                                        <Group spacing={8}>
+                                        <Group gap={8}>
                                             <Badge color="teal">Audit en cours</Badge>
                                             <Button
                                                 size="xs"
@@ -578,7 +578,7 @@ export default function ChatConversationPage() {
                 <TypingIndicator typingUser={typingUser}/>
 
                 <Paper
-                    ref={containerRef}  // ✅ Pour accéder au scroll container plus tard
+                    ref={containerRef}
                     shadow="xs"
                     p="sm"
                     withBorder
@@ -596,7 +596,7 @@ export default function ChatConversationPage() {
                             setFollowOutput(atBottom ? 'smooth' : false);
                         }}
                         overscan={20}
-                        itemContent={(index, msg) => (
+                        itemContent={(_, msg) => (
                             <MessageItem
                                 msg={msg}
                                 isHovered={hoveredMessageId === msg.id}
@@ -616,12 +616,12 @@ export default function ChatConversationPage() {
                             Header: () => (
                                 <>
                                     {isLoadingMore && (
-                                        <Box p="xs" sx={{display: 'flex', justifyContent: 'center'}}>
+                                        <Box p="xs" style={{display: 'flex', justifyContent: 'center'}}>
                                             <Loader></Loader>
                                         </Box>
                                     )}
                                     {!hasMore && (
-                                        <Box p="xs" sx={{display: 'flex', justifyContent: 'center'}}>
+                                        <Box p="xs" style={{display: 'flex', justifyContent: 'center'}}>
           <span style={{fontSize: 13, fontStyle: 'italic', color: theme.colors.gray[5]}}>
             Début de la conversation
           </span>
@@ -653,7 +653,7 @@ export default function ChatConversationPage() {
                     )}
 
 
-                    <Group mt="xs" spacing={4} align="flex-end" style={{width: '100%'}}>
+                    <Group mt="xs" gap={4} align="flex-end" style={{width: '100%'}}>
                         <Box style={{flexGrow: 1}}>
                             <Input
                                 placeholder="Votre message..."

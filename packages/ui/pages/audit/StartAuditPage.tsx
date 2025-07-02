@@ -16,10 +16,10 @@ import {
     Title
 } from "@mantine/core";
 import axiosInstance from "../../utils/axiosInstance";
-import {useUser} from "../../context/UserContext";
-import {auditFieldConfig} from "../../utils/auditConfig";
+import {useUser} from "ui/context/UserContext";
+import {auditFieldConfig} from "ui/utils/auditConfig";
 import ConfirmModal from "../../modals/ConfirmModal";
-import {AuditTypeEnum, AuditTypeLabels} from "../../enum/AuditTypeEnum";
+import {AuditTypeEnum, AuditTypeLabels} from "ui/enum/AuditTypeEnum";
 
 export default function StartAuditPage() {
     const {auditId} = useParams();
@@ -41,26 +41,33 @@ export default function StartAuditPage() {
     }
 
     useEffect(() => {
-        axiosInstance
-            .get(`/audit/${auditId}/available-types`)
-            .then((res) => setAvailableTypes(
-                res.data.types.map((type: string) => type.toUpperCase())
-            ))
-            .catch(() => setError("Erreur lors du chargement des types d'audit."));
+        const fetchAvailableTypes = async () => {
+            try {
+                const res = await axiosInstance.get(`/audit/${auditId}/available-types`);
+                setAvailableTypes(res.data.types.map((type: string) => type.toUpperCase()));
+            } catch {
+                setError("Erreur lors du chargement des types d'audit.");
+            }
+        };
+        fetchAvailableTypes();
     }, [auditId]);
 
     useEffect(() => {
-        axiosInstance.get(`/audit/${auditId}`).then((res) => {
-            if (res.data?.file_path) {
-                setReportUrl(res.data.file_path);
-                setHasReport(true);
-            } else {
+        const fetchAudit = async () => {
+            try {
+                const res = await axiosInstance.get(`/audit/${auditId}`);
+                if (res.data?.file_path) {
+                    setReportUrl(res.data.file_path);
+                    setHasReport(true);
+                } else {
+                    setHasReport(false);
+                }
+            } catch {
+                setReportUrl(null);
                 setHasReport(false);
             }
-        }).catch(() => {
-            setReportUrl(null);
-            setHasReport(false);
-        });
+        };
+        fetchAudit();
     }, [auditId]);
 
     useEffect(() => {
@@ -105,11 +112,9 @@ export default function StartAuditPage() {
         const results: Record<string, any> = {};
         const handled = new Set<string>();
 
-        // Vérification XSS+SQLI groupé
         const isBothXssSqli = selectedTypes.includes(AuditTypeEnum.XSS) && selectedTypes.includes(AuditTypeEnum.SQLI);
 
         try {
-            // Traitement groupé XSS+SQLI
             if (isBothXssSqli) {
                 const url = routeMap["sqli"];
                 const payload = {
@@ -132,7 +137,6 @@ export default function StartAuditPage() {
                 handled.add("sqli");
             }
 
-            // Traitement des autres types indépendants
             for (const type of orderedTypes) {
                 if (handled.has(type)) continue;
 
@@ -149,7 +153,6 @@ export default function StartAuditPage() {
                 handled.add(type);
             }
 
-            // Génération du rapport
             await axiosInstance.post("/reports/generate", {
                 audit_id: auditId,
                 results
@@ -227,7 +230,7 @@ export default function StartAuditPage() {
                         label: AuditTypeLabels[type] || type
                     }))}
                     value={selectedTypes}
-                    onChange={setSelectedTypes}
+                    onChange={(values) => setSelectedTypes(values as AuditTypeEnum[])}
                 />
                 <PasswordInput
                     label="Mot de passe unique"
@@ -321,8 +324,8 @@ export default function StartAuditPage() {
                             <Group key={type}>
                                 <Text>{AuditTypeLabels[type] || type}</Text>
                                 {auditStatus[type] === "pending" && <Loader size="xs"/>}
-                                {auditStatus[type] === "success" && <Text color="green">✅</Text>}
-                                {auditStatus[type] === "error" && <Text color="red">❌</Text>}
+                                {auditStatus[type] === "success" && <Text c="green">✅</Text>}
+                                {auditStatus[type] === "error" && <Text c="red">❌</Text>}
                             </Group>
                         ))}
                     </Stack>

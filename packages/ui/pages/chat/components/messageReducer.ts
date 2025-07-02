@@ -1,4 +1,3 @@
-// Définition locale de l'interface Message
 export interface Message {
     id: number;
     conversation_id: number;
@@ -7,15 +6,13 @@ export interface Message {
     deleted: boolean;
     timestamp: string;
     deleted_at?: string;
-    from?: 'me' | 'other'; // champ optionnel utilisé dans le frontend
+    from: 'me' | 'other';
 }
 
-// Types d'action pour le reducer
 export type MessageAction =
     | { type: 'SET_MESSAGES'; payload: Message[] | ((prev: Message[]) => Message[]) }
     | { type: 'ADD_MESSAGE'; payload: Message };
 
-// Reducer
 export const messageReducer = (state: Message[], action: MessageAction): Message[] => {
     switch (action.type) {
         case 'SET_MESSAGES':

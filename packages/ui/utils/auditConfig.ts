@@ -27,7 +27,10 @@ export const auditFieldConfig: Record<string, { label: string; key: string; type
         {label: "Nombre de threads", key: "threads", type: "number", default: 10}
     ],
 
-    endpoint_discovery: [],
+    endpoint_discovery: [
+        {label: "Wordlist de chemins", key: "wordlist", type: "file"},
+        {label: "Nombre de threads", key: "workers", type: "number", default: 5000000}
+    ],
     web_technologies: [],
     http_header_identification: [],
 };

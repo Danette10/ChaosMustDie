@@ -3,7 +3,7 @@ import {useNavigate} from "react-router-dom";
 import {motion} from "framer-motion";
 import {Alert, Box, Button, Center, Group, Paper, PinInput, Text, Title} from "@mantine/core";
 import {IconCheck, IconX} from "@tabler/icons-react";
-import {BackButton} from "../../components/BackButton";
+import {BackButton} from "ui/components/BackButton";
 import axiosInstance from "../../utils/axiosInstance";
 
 export default function ConfirmCode() {

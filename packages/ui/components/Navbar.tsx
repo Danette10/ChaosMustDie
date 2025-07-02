@@ -25,8 +25,8 @@ export const Navbar = () => {
 
     return (
         <Paper shadow="sm" px="md" py="sm" radius={0} style={{paddingRight: "0"}}>
-            <Group position="apart" align="center" style={{justifyContent: "space-between"}}>
-                <Group spacing="xs">
+            <Group justify="space-between" align="center" style={{justifyContent: "space-between"}}>
+                <Group gap="xs">
                     <Button
                         size="xs"
                         variant={location.pathname === "/dashboard" ? "filled" : "subtle"}

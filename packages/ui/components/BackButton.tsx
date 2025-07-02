@@ -2,14 +2,26 @@ import {ArrowLeft} from "lucide-react";
 import {useNavigate} from "react-router-dom";
 import {ActionIcon, useComputedColorScheme} from "@mantine/core";
 
-export const BackButton = () => {
+type BackButtonProps = {
+    onClick?: () => void;
+};
+
+export const BackButton = ({onClick}: BackButtonProps) => {
     const navigate = useNavigate();
     const colorScheme = useComputedColorScheme();
     const isDark = colorScheme === "dark";
 
+    const handleClick = () => {
+        if (onClick) {
+            onClick();
+        } else {
+            navigate(-1);
+        }
+    };
+
     return (
         <ActionIcon
-            onClick={() => navigate(-1)}
+            onClick={handleClick}
             aria-label="Retour"
             size="lg"
             variant="light"

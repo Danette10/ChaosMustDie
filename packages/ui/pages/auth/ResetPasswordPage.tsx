@@ -2,7 +2,7 @@ import {useState} from "react";
 import {useNavigate, useSearchParams} from "react-router-dom";
 import axiosInstance from "../../utils/axiosInstance";
 import {Alert, Box, Button, Center, Group, Paper, PasswordInput, Stack, Title} from "@mantine/core";
-import {BackButton} from "../../components/BackButton";
+import {BackButton} from "ui/components/BackButton";
 
 export default function ResetPasswordPage() {
     const [searchParams] = useSearchParams();

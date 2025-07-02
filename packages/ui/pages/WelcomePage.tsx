@@ -18,9 +18,9 @@ export default function WelcomePage() {
         <PageTransition>
             <Box h="100vh" px="md">
                 <Center h="100%">
-                    <Stack align="center" spacing="md">
+                    <Stack align="center" gap="md">
                         <Title order={2}>Bienvenue</Title>
-                        <Text color="dimmed">Veuillez vous connecter ou créer un compte.</Text>
+                        <Text c="dimmed">Veuillez vous connecter ou créer un compte.</Text>
 
                         <Button fullWidth onClick={() => navigate("/login")}>
                             Se connecter

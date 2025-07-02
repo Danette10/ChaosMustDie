@@ -1,7 +1,7 @@
 import {useState} from "react";
 import {Link, useNavigate} from "react-router-dom";
-import {useUser} from "../../context/UserContext";
-import {BackButton} from "../../components/BackButton";
+import {useUser} from "ui/context/UserContext";
+import {BackButton} from "ui/components/BackButton";
 import axiosInstance from "../../utils/axiosInstance";
 import {Alert, Box, Button, Center, Group, Paper, PasswordInput, Stack, Text, TextInput, Title} from "@mantine/core";
 
@@ -79,6 +79,10 @@ export default function LoginPage() {
 
                         <Text size="sm" ta="center" mt="sm">
                             <Link to="/forgot-password">Mot de passe oublié ?</Link>
+                        </Text>
+                        <Text size="sm" ta="center">
+                            Pas encore de compte ?{" "}
+                            <Link to="/register">Inscrivez-vous ici</Link>
                         </Text>
                     </Stack>
                 </form>
