@@ -38,10 +38,10 @@ export function AuditList({limit, statusFilter}: AuditListProps) {
     const itemsPerPage = 10;
 
     useEffect(() => {
-        setLoading(true);
-        axiosInstance
-            .get("/audit/my-audits")
-            .then((res) => {
+        const fetchAudits = async () => {
+            try {
+                setLoading(true);
+                const res = await axiosInstance.get("/audit/my-audits");
                 const all = [
                     ...(res.data.pending || []),
                     ...(res.data.in_progress || []),
@@ -50,9 +50,14 @@ export function AuditList({limit, statusFilter}: AuditListProps) {
                 ];
                 setAudits(all);
                 setFiltered(all);
-            })
-            .catch(console.error)
-            .finally(() => setLoading(false));
+            } catch (err) {
+                console.error(err);
+            } finally {
+                setLoading(false);
+            }
+        };
+
+        fetchAudits();
     }, []);
 
     useEffect(() => {
@@ -77,7 +82,7 @@ export function AuditList({limit, statusFilter}: AuditListProps) {
     if (loading) return <Loader/>;
 
     return (
-        <Stack spacing="xl">
+        <Stack gap="xl">
 
             {!limit && (
                 <Paper shadow="sm" p="lg" withBorder>
@@ -92,7 +97,7 @@ export function AuditList({limit, statusFilter}: AuditListProps) {
                 </Paper>
             )}
 
-            <SimpleGrid cols={1} breakpoints={[{minWidth: 768, cols: 2}]} spacing="md">
+            <SimpleGrid cols={{base: 1, md: 2}} spacing="md">
                 {paginated.map((audit) => {
                     const isAuditor = user?.user_type === "auditor";
                     const isCompany = user?.user_type === "company";
@@ -130,12 +135,12 @@ export function AuditList({limit, statusFilter}: AuditListProps) {
                                 }
                             }}
                         >
-                            <Stack spacing="xs">
+                            <Stack gap="xs">
                                 <Text fw={600}>
                                     Audit de{" "}
                                     <strong>
                                         {user?.user_type === "company"
-                                            ? `${audit.auditor?.first_name} ${audit.auditor?.last_name}`
+                                            ? `${audit.auditor?.firstname} ${audit.auditor?.lastname}`
                                             : audit.company?.name}
                                     </strong>
                                 </Text>
@@ -150,12 +155,13 @@ export function AuditList({limit, statusFilter}: AuditListProps) {
             </SimpleGrid>
 
             {!limit && totalPages > 1 && (
-                <Pagination
-                    total={totalPages}
-                    value={currentPage}
-                    onChange={setCurrentPage}
-                    position="center"
-                />
+                <div style={{display: "flex", justifyContent: "center"}}>
+                    <Pagination
+                        total={totalPages}
+                        value={currentPage}
+                        onChange={setCurrentPage}
+                    />
+                </div>
             )}
         </Stack>
     );

@@ -1,6 +1,7 @@
 import {motion} from "framer-motion"
+import * as React from 'react';
 
-export default function PageTransition({children}: { children: React.ReactNode }) {
+export default function PageTransition({children}: { children?: React.ReactNode }) {
     return (
         <motion.div
             initial={{opacity: 0, x: 50}}

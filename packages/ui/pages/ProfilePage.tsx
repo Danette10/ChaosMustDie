@@ -22,18 +22,21 @@ export default function ProfilePage() {
     const [changePasswordError, setChangePasswordError] = useState("");
 
     useEffect(() => {
-        axiosInstance
-            .get("/profile/audits")
-            .then((res) => {
+        const fetchAudits = async () => {
+            try {
+                const res = await axiosInstance.get("/profile/audits");
                 setAllAudits(res.data.all);
                 setSelectedAudits(res.data.selected);
-            })
-            .catch((err) => {
+            } catch (err) {
                 console.error("Erreur lors du chargement des audits :", err);
                 setError("Erreur lors du chargement des types d'audit");
                 setSuccess("");
-            })
-            .finally(() => setLoading(false));
+            } finally {
+                setLoading(false);
+            }
+        };
+
+        fetchAudits();
     }, []);
 
     const handleToggle = (auditType: string) => {
@@ -44,43 +47,40 @@ export default function ProfilePage() {
         );
     };
 
-    const handleSave = () => {
-        axiosInstance
-            .post("/profile/audits", {selected: selectedAudits})
-            .then(() => {
-                setSuccess("Préférences enregistrées avec succès");
-                setError("");
-                setShowAlert(true);
-            })
-            .catch((err) => {
-                console.error("Erreur lors de la sauvegarde :", err);
-                setError("Erreur lors de l'enregistrement");
-                setSuccess("");
-                setShowAlert(true);
-            });
+    const handleSave = async () => {
+        try {
+            await axiosInstance.post("/profile/audits", {selected: selectedAudits});
+            setSuccess("Préférences enregistrées avec succès");
+            setError("");
+            setShowAlert(true);
+        } catch (err) {
+            console.error("Erreur lors de la sauvegarde :", err);
+            setError("Erreur lors de l'enregistrement");
+            setSuccess("");
+            setShowAlert(true);
+        }
     };
 
-    const handleChangePassword = () => {
-        axiosInstance.post("/auth/change-password", {
-            old_password: oldPassword,
-            new_password: newPassword
-        })
-            .then(() => {
-                setSuccess("Mot de passe changé avec succès");
-                setError("");
-                setChangePasswordModalOpen(false);
-                setOldPassword("");
-                setNewPassword("");
-                setChangePasswordError("");
-            })
-            .catch((err) => {
-                console.error("Erreur lors du changement de mot de passe :", err);
-                if (err.response?.status === 401) {
-                    setChangePasswordError("L'ancien mot de passe est incorrect.");
-                } else {
-                    setChangePasswordError("Erreur lors du changement de mot de passe.");
-                }
+    const handleChangePassword = async () => {
+        try {
+            await axiosInstance.post("/auth/change-password", {
+                old_password: oldPassword,
+                new_password: newPassword
             });
+            setSuccess("Mot de passe changé avec succès");
+            setError("");
+            setChangePasswordModalOpen(false);
+            setOldPassword("");
+            setNewPassword("");
+            setChangePasswordError("");
+        } catch (err: any) {
+            console.error("Erreur lors du changement de mot de passe :", err);
+            if (err.response?.status === 401) {
+                setChangePasswordError("L'ancien mot de passe est incorrect.");
+            } else {
+                setChangePasswordError("Erreur lors du changement de mot de passe.");
+            }
+        }
     };
 
     useEffect(() => {
@@ -108,9 +108,9 @@ export default function ProfilePage() {
                     </Alert>
                 )}
                 <Box>
-                    <Title order={3} mb="xs" align="center">Informations utilisateur</Title>
-                    <Text mb="xs"><strong>Nom :</strong> {user?.last_name}</Text>
-                    <Text mb="xs"><strong>Prénom :</strong> {user?.first_name}</Text>
+                    <Title order={3} mb="xs" ta="center">Informations utilisateur</Title>
+                    <Text mb="xs"><strong>Nom :</strong> {user?.lastname}</Text>
+                    <Text mb="xs"><strong>Prénom :</strong> {user?.firstname}</Text>
                     <Text mb="xs"><strong>Email :</strong> {user?.email}</Text>
                     <Text mb="xs"><strong>Type d'utilisateur :</strong> {user && UserTypeLabel[user.user_type]}</Text>
                     <Stack mt="md">
@@ -123,19 +123,20 @@ export default function ProfilePage() {
                             Changer le mot de passe
                         </Button>
                         {user?.user_type === "company" && (
-                            <Button color="red"
-                                    onClick={() => {
-                                        axiosInstance.post("/auth/reset-unique-password")
-                                            .then(res => {
-                                                setSuccess(res.data.message);
-                                                setError("");
-                                            })
-                                            .catch(err => {
-                                                console.error("Erreur lors de la réinitialisation du mot de passe :", err);
-                                                setError("Échec de la réinitialisation du mot de passe");
-                                                setSuccess("");
-                                            });
-                                    }}>
+                            <Button
+                                color="red"
+                                onClick={async () => {
+                                    try {
+                                        const res = await axiosInstance.post("/auth/reset-unique-password");
+                                        setSuccess(res.data.message);
+                                        setError("");
+                                    } catch (err) {
+                                        console.error("Erreur lors de la réinitialisation du mot de passe :", err);
+                                        setError("Échec de la réinitialisation du mot de passe");
+                                        setSuccess("");
+                                    }
+                                }}
+                            >
                                 Réinitialiser le mot de passe unique
                             </Button>
                         )}
@@ -143,8 +144,8 @@ export default function ProfilePage() {
                 </Box>
 
                 <Box>
-                    <Title order={3} mt="md" mb="xs" align="center">Types d'audit souhaités</Title>
-                    <Stack spacing="xs">
+                    <Title order={3} mt="md" mb="xs" ta="center">Types d'audit souhaités</Title>
+                    <Stack gap="xs">
                         {allAudits.map((type) => (
                             <Checkbox
                                 key={type}

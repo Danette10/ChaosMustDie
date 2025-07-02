@@ -5,8 +5,8 @@ import {useNavigate} from "react-router-dom";
 
 type User = {
     id: number;
-    first_name: string;
-    last_name: string;
+    firstname: string;
+    lastname: string;
     email: string;
     user_type: UserTypeEnum;
     phone_number?: string;
@@ -67,7 +67,7 @@ export function UserProvider({children}: { children: React.ReactNode }) {
             localStorage.removeItem("token_expiry");
             setUser(null);
             setLoading(false);
-            navigate("/login");
+            navigate("/");
             return;
         }
 
@@ -99,7 +99,7 @@ export function UserProvider({children}: { children: React.ReactNode }) {
             localStorage.removeItem("token_expiry");
             setUser(null);
             setLoading(false);
-            navigate("/login");
+            navigate("/");
             return;
         }
 
@@ -121,3 +121,5 @@ export function UserProvider({children}: { children: React.ReactNode }) {
         </UserContext.Provider>
     );
 }
+
+export type {User};

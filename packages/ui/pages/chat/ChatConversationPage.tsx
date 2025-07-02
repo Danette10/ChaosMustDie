@@ -1,19 +1,35 @@
-import React, {useCallback, useEffect, useReducer, useRef, useState} from 'react';
+import * as React from 'react';
+import {useCallback, useEffect, useReducer, useRef, useState} from 'react';
 import {debounce} from 'lodash';
 import {useNavigate, useParams} from 'react-router-dom';
-import {ActionIcon, Box, Group, Input, Paper, Title, useComputedColorScheme, useMantineTheme} from '@mantine/core';
+import {
+    ActionIcon,
+    Badge,
+    Box,
+    Button,
+    Group,
+    Input,
+    Paper,
+    Title,
+    useComputedColorScheme,
+    useMantineTheme
+} from '@mantine/core';
 import {Virtuoso, VirtuosoHandle} from 'react-virtuoso';
 import PageTransition from '../../components/PageTransition';
 import axiosInstance from '../../utils/axiosInstance';
-import {BackButton} from '../../components/BackButton';
-import {useUser} from '../../context/UserContext';
-import {useSocket} from '../../hooks/useSocket';
+import {BackButton} from 'ui/components/BackButton';
+import {User, useUser} from 'ui/context/UserContext';
+import {useSocket} from 'ui/hooks/useSocket';
 import ConfirmModal from "../../modals/ConfirmModal";
 import {MessageItem} from './components/MessageItem';
 import {TypingIndicator} from './components/TypingIndicator';
-import {Message, MessageAction, messageReducer} from './components/messageReducer';
+import {Message, messageReducer} from './components/messageReducer';
 import {IconArrowDown, IconSend} from '@tabler/icons-react';
-import {Loader} from "../../components/Loader";
+import {Loader} from "ui/components/Loader";
+import EndAuditModal from "../../modals/EndAuditModal";
+import {notifications} from "@mantine/notifications";
+import {UserTypeEnum} from "ui/enum/UserTypeEnum";
+import {Audit, AuditRequestedPayload, AuditSocketPayload} from "ui/types/audit";
 
 export default function ChatConversationPage() {
     const {conversationId} = useParams();
@@ -26,19 +42,19 @@ export default function ChatConversationPage() {
     const isCurrentlyTyping = useRef(false);
 
     const [input, setInput] = useState('');
-    const [partner, setPartner] = useState(null);
+    const [partner, setPartner] = useState<User | null>(null);
     const [typingUser, setTypingUser] = useState(false);
-    const [hoveredMessageId, setHoveredMessageId] = useState(null);
+    const [hoveredMessageId, setHoveredMessageId] = useState<number | null>(null);
     const [messageToDelete, setMessageToDelete] = useState<number | null>(null);
     const [confirmDeleteOpen, setConfirmDeleteOpen] = useState(false);
     const [deleting, setDeleting] = useState(false);
     const [showScrollToBottom, setShowScrollToBottom] = useState(false);
     const virtuosoRef = useRef<VirtuosoHandle | null>(null);
 
-    const [messages, dispatch] = useReducer<React.Reducer<Message[], MessageAction>>(messageReducer, []);
+    const [messages, dispatch] = useReducer(messageReducer, [] as Message[]);
     const [followOutput, setFollowOutput] = useState<'smooth' | false>('smooth');
+    const containerRef = useRef<HTMLDivElement | null>(null);
 
-    const prevLengthRef = useRef(0);
     const isAtBottomRef = useRef(true);
 
     const LIMIT = 20;
@@ -46,8 +62,12 @@ export default function ChatConversationPage() {
     const [hasMore, setHasMore] = useState(true);
     const [isLoadingMore, setIsLoadingMore] = useState(false);
     const [firstItemIndex, setFirstItemIndex] = useState(0);
+    const [audit, setAudit] = useState<Partial<Audit> | null>(null);
+    const [showFinishModal, setShowFinishModal] = useState(false);
+    const [endAuditLoading, setEndAuditLoading] = useState(false);
+    const lastScrollTopRef = useRef(0);
 
-    const formatTimestamp = useCallback((timestamp) => {
+    const formatTimestamp = useCallback((timestamp: string | number) => {
         const date = new Date(timestamp);
         return `le ${date.toLocaleDateString("fr-FR")} à ${date.toLocaleTimeString("fr-FR")}`;
     }, []);
@@ -64,6 +84,93 @@ export default function ChatConversationPage() {
         [conversationId, user]
     );
 
+
+    const handleAuditEnd = async (data: { success: boolean; comment: string; reportFile?: File }) => {
+        setEndAuditLoading(true);
+        try {
+            const formData = new FormData();
+            formData.append("auditor_id", user?.id.toString()!);
+            formData.append("company_id", partner?.company?.id?.toString() || "");
+            formData.append("success", data.success.toString());
+            formData.append("comment", data.comment);
+            if (!audit?.id) {
+                console.error("audit_id est manquant !");
+                return;
+            }
+            formData.append("audit_id", audit.id.toString());
+            if (data.success && data.reportFile) {
+                formData.append("file", data.reportFile);
+            }
+
+            await axiosInstance.post("/audit/finish", formData);
+
+            setAudit({...audit, status: "completed"});
+            setShowFinishModal(false);
+        } catch (err) {
+            console.error("Erreur lors de la fin d'audit :", err);
+            notifications.show({
+                title: "Erreur",
+                message: "Impossible de terminer l’audit. Veuillez réessayer.",
+                color: "red",
+            });
+        } finally {
+            setEndAuditLoading(false);
+        }
+    };
+
+    const handleAuditResponse = async (action: "accept" | "refuse") => {
+        if (!user || !partner) return;
+
+        const auditor_id = user.user_type === UserTypeEnum.COMPANY ? partner.id : user.id;
+        const company_id = user.user_type === UserTypeEnum.COMPANY
+            ? user.company?.id
+            : partner.company?.id;
+
+        if (!auditor_id || !company_id) {
+            console.warn("Impossible d'envoyer la réponse à l’audit : ID manquant");
+            return;
+        }
+
+        const formData = new FormData();
+        formData.append("auditor_id", auditor_id.toString());
+        formData.append("company_id", company_id.toString());
+        formData.append("conversation_id", conversationId || "");
+        formData.append("action", action);
+
+        try {
+            const res = await axiosInstance.patch("/audit/respond", formData);
+
+            if (action === "accept" && res.data?.audit_id) {
+                setAudit({id: res.data.audit_id, status: "in_progress"});
+            } else if (action === "refuse") {
+                setAudit(null);
+            }
+
+        } catch (err) {
+            console.error(`Erreur lors de l’audit ${action}:`, err);
+        }
+    };
+
+    const handleRequestAudit = async () => {
+        try {
+            await axiosInstance.post("/audit/request", {
+                auditor_id: partner?.id,
+                company_id: user?.company?.id,
+                conversation_id: conversationId
+            });
+            const res = await axiosInstance.get("/audit/status", {
+                params: {auditor_id: partner?.id, company_id: user?.company?.id}
+            });
+            setAudit({id: res.data.audit_id, status: "pending"});
+            setInput('');
+            socketRef.current?.emit("stop_typing", {conversation_id: conversationId, user_id: user?.id});
+            emitStopTyping.cancel();
+            isCurrentlyTyping.current = false;
+        } catch (err) {
+            console.error(err);
+        }
+    };
+
     const loadMessages = async (initial = false) => {
         if (!conversationId) return;
 
@@ -74,43 +181,65 @@ export default function ChatConversationPage() {
 
             const newMessages = res.data.messages;
 
-            // ⚠️ Mets à jour offset en premier
             setOffset((prev) => prev + newMessages.length);
             setHasMore(res.data.has_more);
-
-            dispatch({
-                type: 'SET_MESSAGES',
-                payload: (prev) => {
-                    const newList = initial ? newMessages : [...newMessages, ...prev];
-
-                    if (!initial) {
-                        setFirstItemIndex((prevIndex) => prevIndex - newMessages.length);
-                    } else {
-                        setFirstItemIndex(0);
-                    }
-
-                    return newList;
-                }
-            });
+            setPartner(res.data.partner);
+            setAudit((prev) => res.data.audit ?? prev);
 
             if (initial) {
+                setFirstItemIndex(0);
+                dispatch({
+                    type: 'SET_MESSAGES',
+                    payload: () => newMessages
+                });
+
                 setTimeout(() => {
                     virtuosoRef.current?.scrollToIndex({
                         index: newMessages.length - 1,
-                        behavior: 'auto' // ou 'smooth' si tu veux que ça glisse un peu
+                        behavior: 'auto'
                     });
-                }, 100); // au lieu de 0
+                }, 50);
+            } else {
+
+                requestAnimationFrame(() => {
+                    const scrollContainer = containerRef.current?.querySelector('[data-virtuoso-scroller="true"]') as HTMLElement | null;
+
+                    if (!scrollContainer) {
+                        console.warn("scrollContainer introuvable");
+                        return;
+                    }
+
+                    const prevScrollHeight = scrollContainer.scrollHeight;
+                    const prevScrollTop = scrollContainer.scrollTop;
+
+                    dispatch({
+                        type: 'SET_MESSAGES',
+                        payload: (prev) => [...newMessages, ...prev]
+                    });
+
+                    setFirstItemIndex((prev) => prev + newMessages.length);
+
+                    requestAnimationFrame(() => {
+                        const updatedScrollContainer = containerRef.current?.querySelector('[data-virtuoso-scroller="true"]') as HTMLElement | null;
+                        if (!updatedScrollContainer) return;
+
+                        const newScrollHeight = updatedScrollContainer.scrollHeight;
+                        const delta = newScrollHeight - prevScrollHeight;
+                        updatedScrollContainer.scrollTop = prevScrollTop + delta;
+                    });
+                });
             }
 
-            setPartner(res.data.partner);
             await axiosInstance.post(`/chat/conversations/${conversationId}/read`);
         } catch (err) {
             console.error("Erreur récupération ou marquage comme lu :", err);
         }
     };
 
+
     useEffect(() => {
         setOffset(0);
+        setFirstItemIndex(0);
         loadMessages(true);
     }, [conversationId]);
 
@@ -119,7 +248,7 @@ export default function ChatConversationPage() {
         if (!conversationId || !socketRef.current) return;
         const socket = socketRef.current;
 
-        const handleNewMessage = (message) => {
+        const handleNewMessage = async (message: Message) => {
             if (parseInt(conversationId) === message.conversation_id) {
                 const isMine = message.sender_id === user?.id;
                 if (isMine) return;
@@ -129,16 +258,21 @@ export default function ChatConversationPage() {
                         id: message.id,
                         from: "other",
                         sender_id: message.sender_id,
+                        conversation_id: message.conversation_id,
                         deleted: false,
                         content: message.content,
                         timestamp: message.timestamp
                     }
                 });
-                axiosInstance.post(`/chat/conversations/${conversationId}/read`).catch(console.error);
+                try {
+                    await axiosInstance.post(`/chat/conversations/${conversationId}/read`);
+                } catch (err) {
+                    console.error(err);
+                }
             }
         };
 
-        const handleDeletedMessage = (data) => {
+        const handleDeletedMessage = (data: { conversation_id: number; message_id: number; deleted_at: string }) => {
             if (parseInt(conversationId) !== data.conversation_id) return;
             dispatch({
                 type: 'SET_MESSAGES',
@@ -156,6 +290,77 @@ export default function ChatConversationPage() {
             });
         };
 
+        const handleAuditRequested = (data: AuditRequestedPayload) => {
+            if (data.conversation_id !== conversationId) return;
+
+            if (data.auditor_id === user?.id || data.company_id === user?.company?.id) {
+                setAudit({
+                    status: "pending"
+                });
+            }
+
+            const isFromMe = Number(data.emitted_by) === Number(user?.id);
+
+            if (!isFromMe) {
+                notifications.show({
+                    title: "Nouvelle demande d'audit",
+                    message: "Vous avez reçu une nouvelle demande d’audit.",
+                    color: "yellow",
+                    icon: <IconSend size={16}/>,
+                });
+            } else {
+                notifications.show({
+                    title: "Demande d’audit envoyée",
+                    message: "Votre demande d’audit a été envoyée.",
+                    color: "green",
+                });
+            }
+        };
+
+        const handleAuditAccepted = (data: AuditSocketPayload) => {
+            if (data.auditor_id === user?.id || data.company_id === user?.company?.id) {
+                setAudit(prev => ({...prev, id: data.audit_id, status: "in_progress"}));
+            }
+
+            const isFromMe = Number(data.emitted_by) === Number(user?.id);
+
+            notifications.show({
+                title: "Audit accepté",
+                message: isFromMe ? "Vous avez accepté la demande d’audit." : "Votre demande d’audit a été acceptée.",
+                color: "green",
+                icon: <IconSend size={16}/>,
+            });
+        };
+
+        const handleAuditRefused = (data: AuditSocketPayload) => {
+            if (data.auditor_id === user?.id || data.company_id === user?.company?.id) {
+                setAudit(prev => ({...prev, id: data.audit_id, status: "refused"}));
+            }
+
+            const isFromMe = Number(data.emitted_by) === Number(user?.id);
+
+            notifications.show({
+                title: "Audit refusé",
+                message: isFromMe ? "Vous avez refusé la demande d’audit." : "Votre demande d’audit a été refusée.",
+                color: "red",
+                icon: <IconSend size={16}/>,
+            });
+        };
+
+        const handleAuditFinished = (data: AuditSocketPayload) => {
+            if (data.auditor_id === user?.id || data.company_id === user?.company?.id) {
+                setAudit(prev => ({...prev, id: data.audit_id, status: data.status}));
+            }
+
+            const isFromMe = Number(data.emitted_by) === Number(user?.id);
+
+            notifications.show({
+                title: "Audit terminé",
+                message: isFromMe ? "Vous avez terminé l’audit." : "Votre audit a été terminé.",
+                color: "blue",
+            });
+        };
+
         socket.emit("join_conversation", {conversation_id: conversationId});
         socket.on("new_message", handleNewMessage);
         socket.on("typing", (data) => {
@@ -166,14 +371,52 @@ export default function ChatConversationPage() {
         });
         socket.on("message_deleted", handleDeletedMessage);
 
+        socket.on("audit_requested", handleAuditRequested);
+        socket.on("audit_accepted", handleAuditAccepted);
+        socket.on("audit_refused", handleAuditRefused);
+        socket.on("audit_finished", handleAuditFinished);
+
         return () => {
             socket.emit("stop_typing", {conversation_id: conversationId, user_id: user?.id});
             socket.off("new_message", handleNewMessage);
             socket.off("typing");
             socket.off("stop_typing");
             socket.off("message_deleted", handleDeletedMessage);
+            socket.off("audit_requested", handleAuditRequested);
+            socket.off("audit_accepted", handleAuditAccepted);
+            socket.off("audit_refused", handleAuditRefused);
+            socket.off("audit_finished", handleAuditFinished);
         };
     }, [conversationId, user, socketRef]);
+
+    useEffect(() => {
+        if (!partner || !user) return;
+
+        const fetchAuditStatus = async () => {
+            if (!partner || !user) return;
+
+            const auditor_id = user.user_type === UserTypeEnum.AUDITOR ? user.id : partner.id;
+            const company_id = user.user_type === UserTypeEnum.COMPANY
+                ? user.company?.id
+                : partner.company?.id;
+
+            if (!auditor_id || !company_id) {
+                console.warn("Impossible de récupérer audit status : ID manquant");
+                return;
+            }
+
+            try {
+                await axiosInstance.get("/audit/status", {
+                    params: {auditor_id, company_id},
+                });
+            } catch (err) {
+                console.error("Erreur récupération statut audit :", err);
+            }
+        };
+
+
+        fetchAuditStatus();
+    }, [partner, user]);
 
     const sendMessage = async () => {
         if (!input.trim()) return;
@@ -225,14 +468,27 @@ export default function ChatConversationPage() {
         }
     };
 
-    const handleScroll = useCallback((e) => {
-        const {scrollHeight, scrollTop, clientHeight} = e.target;
+    const handleScroll = useCallback((e: React.UIEvent<HTMLDivElement>) => {
+        const {scrollTop, scrollHeight, clientHeight} = e.currentTarget;
+
         const distanceFromBottom = scrollHeight - scrollTop - clientHeight;
         setShowScrollToBottom((prev) => {
             const shouldShow = distanceFromBottom > 200;
             return prev !== shouldShow ? shouldShow : prev;
         });
-    }, []);
+
+        const isScrollingUp = scrollTop < lastScrollTopRef.current;
+        lastScrollTopRef.current = scrollTop;
+
+        if (isScrollingUp && scrollTop < 200 && hasMore && !isLoadingMore) {
+            setIsLoadingMore(true);
+            loadMessages().finally(() => {
+                setTimeout(() => setIsLoadingMore(false), 250);
+            });
+        }
+    }, [hasMore, isLoadingMore, loadMessages]);
+
+
 
     const scrollToBottom = () => {
         virtuosoRef.current?.scrollToIndex({index: messages.length - 1, behavior: 'smooth'});
@@ -241,8 +497,8 @@ export default function ChatConversationPage() {
     return (
         <PageTransition>
             <Box p="md">
-                <Group position="apart" mb="xs">
-                    <Group spacing="sm">
+                <Group justify="space-between" mb="xs">
+                    <Group gap="sm">
                         <BackButton onClick={() => {
                             socketRef.current?.emit("stop_typing", {
                                 conversation_id: conversationId,
@@ -250,13 +506,79 @@ export default function ChatConversationPage() {
                             });
                             navigate(-1);
                         }}/>
-                        <Title order={3}>{partner ? `${partner.firstname} ${partner.lastname}` : "Conversation"}</Title>
+                        <Title order={3}>
+                            {partner ? `${partner.firstname} ${partner.lastname}` : "Conversation"}
+                        </Title>
+                        <Group gap="sm">
+                            {user?.user_type === UserTypeEnum.COMPANY && (
+                                <>
+                                    {audit?.status === "in_progress" && (
+                                        <Badge color="teal">Audit en cours</Badge>
+                                    )}
+
+                                    {audit?.status === "pending" && (
+                                        <Badge color="yellow">Demande envoyée</Badge>
+                                    )}
+
+                                    {(audit?.status === "completed" || audit?.status === "failed" || audit?.status === "refused") && (
+                                        <Button size="xs" variant="light" onClick={handleRequestAudit}>
+                                            Demander un audit
+                                        </Button>
+                                    )}
+                                </>
+                            )}
+
+                            {user?.user_type === UserTypeEnum.AUDITOR && (
+                                <>
+                                    {audit?.status === "pending" && (
+                                        <Group gap={4}>
+                                            <Button
+                                                size="xs"
+                                                color="green"
+                                                variant="light"
+                                                onClick={() => handleAuditResponse("accept")}
+                                            >
+                                                Accepter l'audit
+                                            </Button>
+                                            <Button
+                                                size="xs"
+                                                color="red"
+                                                variant="light"
+                                                onClick={() => handleAuditResponse("refuse")}
+                                            >
+                                                Refuser l'audit
+                                            </Button>
+                                        </Group>
+                                    )}
+
+                                    {audit?.status === "in_progress" && (
+                                        <Group gap={8}>
+                                            <Badge color="teal">Audit en cours</Badge>
+                                            <Button
+                                                size="xs"
+                                                variant="light"
+                                                color="blue"
+                                                onClick={() => setShowFinishModal(true)}
+                                            >
+                                                Terminer
+                                            </Button>
+                                        </Group>
+                                    )}
+
+                                    {audit?.status === "completed" && (
+                                        <Badge color="gray">Audit terminé</Badge>
+                                    )}
+                                </>
+                            )}
+                        </Group>
+
                     </Group>
                 </Group>
 
                 <TypingIndicator typingUser={typingUser}/>
 
                 <Paper
+                    ref={containerRef}
                     shadow="xs"
                     p="sm"
                     withBorder
@@ -274,7 +596,7 @@ export default function ChatConversationPage() {
                             setFollowOutput(atBottom ? 'smooth' : false);
                         }}
                         overscan={20}
-                        itemContent={(index, msg) => (
+                        itemContent={(_, msg) => (
                             <MessageItem
                                 msg={msg}
                                 isHovered={hoveredMessageId === msg.id}
@@ -290,23 +612,16 @@ export default function ChatConversationPage() {
                             />
                         )}
                         onScroll={handleScroll}
-                        startReached={async () => {
-                            if (hasMore && !isLoadingMore) {
-                                setIsLoadingMore(true);
-                                await loadMessages();
-                                setIsLoadingMore(false);
-                            }
-                        }}
                         components={{
                             Header: () => (
                                 <>
                                     {isLoadingMore && (
-                                        <Box p="xs" sx={{display: 'flex', justifyContent: 'center'}}>
+                                        <Box p="xs" style={{display: 'flex', justifyContent: 'center'}}>
                                             <Loader></Loader>
                                         </Box>
                                     )}
                                     {!hasMore && (
-                                        <Box p="xs" sx={{display: 'flex', justifyContent: 'center'}}>
+                                        <Box p="xs" style={{display: 'flex', justifyContent: 'center'}}>
           <span style={{fontSize: 13, fontStyle: 'italic', color: theme.colors.gray[5]}}>
             Début de la conversation
           </span>
@@ -338,7 +653,7 @@ export default function ChatConversationPage() {
                     )}
 
 
-                    <Group mt="xs" spacing={4} align="flex-end" style={{width: '100%'}}>
+                    <Group mt="xs" gap={4} align="flex-end" style={{width: '100%'}}>
                         <Box style={{flexGrow: 1}}>
                             <Input
                                 placeholder="Votre message..."
@@ -403,6 +718,14 @@ export default function ChatConversationPage() {
             >
                 Ce message sera marqué comme supprimé et ne pourra pas être restauré.
             </ConfirmModal>
+
+            <EndAuditModal
+                opened={showFinishModal}
+                onClose={() => setShowFinishModal(false)}
+                onSubmit={handleAuditEnd}
+                loading={endAuditLoading}
+            />
+
         </PageTransition>
     );
 }

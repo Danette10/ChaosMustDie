@@ -20,8 +20,9 @@ export default function EndAuditModal({opened, onClose, onSubmit, loading}: EndA
             : comment.trim().length > 0);
 
     const handleConfirm = () => {
-        if (!isValid) return;
-        onSubmit({success: !!success, comment, reportFile: file});
+        if (!isValid || (success && file === null)) return;
+
+        onSubmit({success: !!success, comment, reportFile: file!});
     };
 
     return (

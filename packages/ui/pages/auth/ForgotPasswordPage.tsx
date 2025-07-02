@@ -1,8 +1,8 @@
-import {useState} from "react";
+import React, {useState} from "react";
 import {useNavigate} from "react-router-dom";
 import axiosInstance from "../../utils/axiosInstance";
 import {Alert, Box, Button, Center, Group, Paper, Stack, TextInput, Title} from "@mantine/core";
-import {BackButton} from "../../components/BackButton";
+import {BackButton} from "ui/components/BackButton";
 
 export default function ForgotPasswordPage() {
     const [email, setEmail] = useState("");

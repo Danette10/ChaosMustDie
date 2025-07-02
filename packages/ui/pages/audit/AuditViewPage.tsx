@@ -1,41 +1,36 @@
-import {
-    Badge,
-    Box,
-    Button,
-    Loader,
-    Paper,
-    Stack,
-    Text,
-    Title,
-    useComputedColorScheme,
-    useMantineTheme,
-} from "@mantine/core";
+import {Badge, Box, Button, Loader, Paper, Stack, Text, Title} from "@mantine/core";
 import {useParams} from "react-router-dom";
 import {useEffect, useState} from "react";
 import axiosInstance from "../../utils/axiosInstance";
-import {useUser} from "../../context/UserContext";
-import {statusColors, statusLabels} from "../../constants/auditStatus";
-import {formatDateTimeFR} from "../../utils/dateUtils";
+import {useUser} from "ui/context/UserContext";
+import {statusColors, statusLabels} from "ui/constants/auditStatus";
+import {formatDateTimeFR} from "ui/utils/dateUtils";
 
 export function AuditViewPage() {
     const {id} = useParams();
     const {user} = useUser();
     const [audit, setAudit] = useState<any | null>(null);
     const [loading, setLoading] = useState(true);
-    const theme = useMantineTheme();
-    const colorScheme = useComputedColorScheme();
-    const isDark = colorScheme === "dark";
 
     useEffect(() => {
-        axiosInstance
-            .get(`/audit/${id}`)
-            .then((res) => setAudit(res.data))
-            .catch(console.error)
-            .finally(() => setLoading(false));
+        const fetchAudit = async () => {
+            try {
+                const res = await axiosInstance.get(`/audit/${id}`);
+                setAudit(res.data);
+            } catch (err) {
+                console.error("Erreur lors du chargement de l'audit :", err);
+            } finally {
+                setLoading(false);
+            }
+        };
+
+        if (id) {
+            fetchAudit();
+        }
     }, [id]);
 
     if (loading) return <Loader/>;
-    if (!audit) return <Text color="red">Audit introuvable</Text>;
+    if (!audit) return <Text c="red">Audit introuvable</Text>;
 
     const isAuditor = user?.user_type === "auditor";
     const isCompany = user?.user_type === "company";
@@ -48,14 +43,14 @@ export function AuditViewPage() {
     return (
         <Box p="md">
             <Paper shadow="md" p="lg" withBorder>
-                <Stack spacing="md">
+                <Stack gap="md">
                     <Title order={3}>Détail de l’audit</Title>
 
                     <Text>
                         <strong>{isAuditor ? "Entreprise auditée" : "Audit réalisé par"} :</strong>{" "}
                         {isAuditor
                             ? audit.company.name
-                            : `${audit.auditor.first_name} ${audit.auditor.last_name}`}
+                            : `${audit.auditor.firstname} ${audit.auditor.lastname}`}
                     </Text>
 
                     <Text>
@@ -100,7 +95,7 @@ export function AuditViewPage() {
                             Télécharger le rapport
                         </Button>
                     ) : (
-                        <Text color="red">Aucun rapport PDF disponible</Text>
+                        <Text c="red">Aucun rapport PDF disponible</Text>
                     )}
                 </Stack>
             </Paper>

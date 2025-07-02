@@ -1,6 +1,6 @@
 import {useEffect, useState} from "react";
 import axiosInstance from "../utils/axiosInstance";
-import {Container, Pagination, Paper, SimpleGrid, Stack, Title,} from "@mantine/core";
+import {Box, Container, Pagination, Paper, SimpleGrid, Stack, Title,} from "@mantine/core";
 import {Loader} from "../components/Loader";
 import {useUser} from "../context/UserContext";
 import {ContactAuditorModal} from "../modals/ContactAuditorModal";
@@ -26,17 +26,23 @@ export default function AllAuditorsPage() {
             return;
         }
 
-        Promise.all([
-            axiosInstance.get("/profile/auditors"),
-            axiosInstance.get("/profile/audits"),
-        ])
-            .then(([auditorsRes, auditsRes]) => {
-                setAuditors(auditorsRes.data);
-                setAuditTypes(auditsRes.data.all);
-                setCompanyPreferredTypes(auditsRes.data.selected); // <- utilisé uniquement pour filtrer les auditeurs
-            })
-            .catch(console.error)
-            .finally(() => setLoading(false));
+        const fetchData = async () => {
+            try {
+                const [auditorsRes, auditsRes] = await Promise.all([
+                    axiosInstance.get("/profile/auditors"),
+                    axiosInstance.get("/profile/audits"),
+                ]);
+                setAuditors((await auditorsRes).data);
+                setAuditTypes((await auditsRes).data.all);
+                setCompanyPreferredTypes((await auditsRes).data.selected);
+            } catch (e) {
+                console.error(e);
+            } finally {
+                setLoading(false);
+            }
+        };
+
+        fetchData();
     }, [user]);
 
     useEffect(() => {
@@ -58,14 +64,14 @@ export default function AllAuditorsPage() {
     );
 
     const auditTypeOptions = Object.fromEntries(
-        companyPreferredTypes.map((type) => [type, AuditTypeLabels[type] || type])
+        companyPreferredTypes.map((type) => [type, AuditTypeLabels[type as keyof typeof AuditTypeLabels] || type])
     );
 
     if (loading) return <Loader/>;
 
     return (
         <Container size="lg" py="lg">
-            <Stack spacing="xl">
+            <Stack gap="xl">
                 <Title order={2}>Tous les auditeurs</Title>
 
                 <Paper shadow="sm" p="lg" withBorder>
@@ -78,7 +84,7 @@ export default function AllAuditorsPage() {
                     />
                 </Paper>
 
-                <SimpleGrid cols={1} breakpoints={[{minWidth: 768, cols: 2}]} spacing="md">
+                <SimpleGrid cols={{base: 1, md: 2}} spacing="md">
                     {paginatedAuditors.map((auditor) => (
                         <AuditorCard
                             key={auditor.id}
@@ -92,20 +98,20 @@ export default function AllAuditorsPage() {
                 </SimpleGrid>
 
                 {paginatedAuditors.length === 0 && (
-                    <Title order={4} align="center" color="dimmed">
+                    <Title order={4} ta="center" c="dimmed">
                         Aucun auditeur ne correspond à vos critères.
                     </Title>
                 )}
 
                 {totalPages > 1 && (
-                    <Pagination
-                        total={totalPages}
-                        value={currentPage}
-                        onChange={setCurrentPage}
-                        position="center"
-                        mt="md"
-                        style={{display: "flex", justifyContent: "center"}}
-                    />
+                    <Box style={{display: "flex", justifyContent: "center"}}>
+                        <Pagination
+                            total={totalPages}
+                            value={currentPage}
+                            onChange={setCurrentPage}
+                            mt="md"
+                        />
+                    </Box>
                 )}
 
                 <ContactAuditorModal

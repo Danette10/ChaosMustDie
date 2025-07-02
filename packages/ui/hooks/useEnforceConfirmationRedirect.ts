@@ -1,43 +1,47 @@
-import {useEffect, useState} from "react"
-import {useLocation, useNavigate} from "react-router-dom"
-import axiosInstance from "../utils/axiosInstance"
+import {useEffect, useState} from "react";
+import {useLocation, useNavigate} from "react-router-dom";
+import axiosInstance from "../utils/axiosInstance";
 
 export const useEnforceConfirmationRedirect = (): boolean => {
-    const [ready, setReady] = useState(false)
-    const navigate = useNavigate()
-    const location = useLocation()
+    const [ready, setReady] = useState(false);
+    const navigate = useNavigate();
+    const location = useLocation();
 
     useEffect(() => {
-        const token = localStorage.getItem("access_token")
-        const pendingEmail = localStorage.getItem("pending_confirmation_email")
+        const checkConfirmation = async () => {
+            const token = localStorage.getItem("access_token");
+            const pendingEmail = localStorage.getItem("pending_confirmation_email");
 
-        if (!token) {
-            if (pendingEmail && !location.pathname.includes("confirm-code")) {
-                navigate("/confirm-code")
+            if (!token) {
+                if (pendingEmail && !location.pathname.includes("confirm-code")) {
+                    navigate("/confirm-code");
+                }
+                setReady(true);
+                return;
             }
-            setReady(true)
-            return
-        }
 
-        axiosInstance
-            .get("/auth/check-confirm-cookie")
-            .then((res) => {
+            try {
+                const res = await axiosInstance.get("/auth/check-confirm-cookie");
+
                 if (res.data?.status !== "confirmed") {
                     if (!location.pathname.includes("confirm-code")) {
-                        navigate("/confirm-code")
+                        navigate("/confirm-code");
                     }
                 } else {
-                    localStorage.removeItem("pending_confirmation_email")
+                    localStorage.removeItem("pending_confirmation_email");
                     if (location.pathname.includes("confirm-code")) {
-                        navigate("/")
+                        navigate("/");
                     }
                 }
-            })
-            .catch(() => {
-                localStorage.removeItem("pending_confirmation_email")
-            })
-            .finally(() => setReady(true))
-    }, [location.pathname, navigate])
+            } catch {
+                localStorage.removeItem("pending_confirmation_email");
+            } finally {
+                setReady(true);
+            }
+        };
 
-    return ready
-}
+        checkConfirmation();
+    }, [location.pathname, navigate]);
+
+    return ready;
+};

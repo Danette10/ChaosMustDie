@@ -25,29 +25,30 @@ export default function DashboardPage() {
     useEffect(() => {
         if (!user) return;
 
-        if (user.user_type === "company") {
-            Promise.all([
-                axiosInstance.get("/profile/auditors"),
-                axiosInstance.get("/profile/audits"),
-            ])
-                .then(([auditorsRes, auditsRes]) => {
-                    setAuditors(auditorsRes.data);
-                    setAuditTypes(auditsRes.data.all);
-                })
-                .catch(console.error)
-                .finally(() => setLoading(false));
-        }
+        const fetchData = async () => {
+            try {
+                if (user.user_type === "company") {
+                    const [auditorsRes, auditsRes] = await Promise.all([
+                        axiosInstance.get("/profile/auditors"),
+                        axiosInstance.get("/profile/audits"),
+                    ]);
+                    setAuditors((await auditorsRes).data);
+                    setAuditTypes((await auditsRes).data.all);
+                }
 
-        if (user.user_type === "auditor") {
-            axiosInstance
-                .get("/audit/my-audits")
-                .then((res) => {
+                if (user.user_type === "auditor") {
+                    const res = await axiosInstance.get("/audit/my-audits");
                     const inProgress = res.data.in_progress || [];
                     setAudits(inProgress);
-                })
-                .catch(console.error)
-                .finally(() => setLoading(false));
-        }
+                }
+            } catch (e) {
+                console.error(e);
+            } finally {
+                setLoading(false);
+            }
+        };
+
+        fetchData();
     }, [user]);
 
     const filteredAuditors = selectedTypes.length
@@ -57,15 +58,15 @@ export default function DashboardPage() {
         : auditors;
 
     const auditTypeOptions = Object.fromEntries(
-        auditTypes.map((type) => [type, AuditTypeLabels[type] || type])
+        auditTypes.map((type) => [type, AuditTypeLabels[type as keyof typeof AuditTypeLabels] || type])
     );
 
     if (loading) return <Loader/>;
 
     return (
         <Container size="lg" py="lg">
-            <Stack spacing="xl">
-                <Title order={2}>Bienvenue, {user?.first_name}</Title>
+            <Stack gap="xl">
+                <Title order={2}>Bienvenue, {user?.firstname}</Title>
 
                 {user?.user_type === "company" && (
                     <>
@@ -80,14 +81,14 @@ export default function DashboardPage() {
                         </Paper>
 
                         <Box>
-                            <Group position="apart" mb="md">
+                            <Group justify="space-between" mb="md">
                                 <Title order={3}>Auditeurs disponibles</Title>
                                 <Button onClick={() => navigate("/auditors")}>
                                     Voir tous les auditeurs
                                 </Button>
                             </Group>
 
-                            <SimpleGrid cols={1} breakpoints={[{minWidth: 768, cols: 2}]} spacing="md">
+                            <SimpleGrid cols={{base: 1, md: 2}} spacing="md">
                                 {filteredAuditors.slice(0, 5).map((auditor) => (
                                     <AuditorCard
                                         key={auditor.id}
@@ -112,7 +113,7 @@ export default function DashboardPage() {
 
                 {user?.user_type === "auditor" && (
                     <>
-                        <Group position="apart" mb="md">
+                        <Group justify="space-between" mb="md">
                             <Title order={2}>Audits en cours</Title>
                             <Button mt="md" onClick={() => navigate("/audit")}>
                                 Voir tous les audits

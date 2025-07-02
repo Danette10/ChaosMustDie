@@ -36,7 +36,7 @@ export const ContactAuditorModal = ({
             }
         } catch (err) {
             console.error(err);
-            setError("Erreur lors de la création de la conversation ❌");
+            setError("Erreur lors de la création de la conversation");
         }
     };
 

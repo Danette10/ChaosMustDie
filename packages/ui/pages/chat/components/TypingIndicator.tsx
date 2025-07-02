@@ -13,7 +13,7 @@ export const TypingIndicator = ({typingUser}: TypingIndicatorProps) => {
             animate={{opacity: [0.5, 1, 0.5]}}
             transition={{repeat: Infinity, duration: 1}}
         >
-            <Text size="sm" color="dimmed" mb="sm">
+            <Text size="sm" c="dimmed" mb="sm">
                 En train d’écrire...
             </Text>
         </motion.div>

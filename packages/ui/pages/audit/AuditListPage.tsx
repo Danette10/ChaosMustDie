@@ -1,5 +1,5 @@
 import {Container, Title} from "@mantine/core";
-import {AuditList} from "../../components/AuditList";
+import {AuditList} from "ui/components/AuditList";
 
 export default function AuditListPage() {
     return (
