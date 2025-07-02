@@ -10,18 +10,32 @@ import MultiFilter from "../components/MultiFilter";
 import {AuditTypeLabels} from "../enum/AuditTypeEnum";
 import {AuditList} from "../components/AuditList";
 
+/**
+ * Composant DashboardPage.
+ *
+ * Ce composant représente la page d'accueil du tableau de bord. Il affiche des informations
+ * personnalisées en fonction du type d'utilisateur (entreprise ou auditeur).
+ * Les entreprises peuvent voir une liste d'auditeurs disponibles et filtrer par type d'audit.
+ * Les auditeurs peuvent voir une liste de leurs audits en cours.
+ *
+ * @returns {JSX.Element} Le composant DashboardPage.
+ */
 export default function DashboardPage() {
-    const {user} = useUser();
-    const navigate = useNavigate();
+    const {user} = useUser(); // Récupère les informations de l'utilisateur depuis le contexte.
+    const navigate = useNavigate(); // Hook pour naviguer entre les pages.
 
-    const [auditors, setAuditors] = useState<any[]>([]);
-    const [auditTypes, setAuditTypes] = useState<string[]>([]);
-    const [selectedTypes, setSelectedTypes] = useState<string[]>([]);
-    const [loading, setLoading] = useState(true);
-    const [modalOpen, setModalOpen] = useState(false);
-    const [selectedAuditor, setSelectedAuditor] = useState<any>(null);
-    const [audits, setAudits] = useState<any[]>([]);
+    const [auditors, setAuditors] = useState<any[]>([]); // État contenant la liste des auditeurs.
+    const [auditTypes, setAuditTypes] = useState<string[]>([]); // État contenant les types d'audit disponibles.
+    const [selectedTypes, setSelectedTypes] = useState<string[]>([]); // État des types d'audit sélectionnés pour le filtrage.
+    const [loading, setLoading] = useState(true); // État indiquant si les données sont en cours de chargement.
+    const [modalOpen, setModalOpen] = useState(false); // État indiquant si la modal de contact est ouverte.
+    const [selectedAuditor, setSelectedAuditor] = useState<any>(null); // État contenant l'auditeur sélectionné pour la modal.
+    const [audits, setAudits] = useState<any[]>([]); // État contenant la liste des audits en cours.
 
+    /**
+     * Effet pour charger les données des auditeurs et des audits en fonction du type d'utilisateur.
+     * Ce hook s'exécute lorsque l'utilisateur est connecté.
+     */
     useEffect(() => {
         if (!user) return;
 
@@ -32,36 +46,44 @@ export default function DashboardPage() {
                         axiosInstance.get("/profile/auditors"),
                         axiosInstance.get("/profile/audits"),
                     ]);
-                    setAuditors((await auditorsRes).data);
-                    setAuditTypes((await auditsRes).data.all);
+                    setAuditors((await auditorsRes).data); // Charge les auditeurs disponibles.
+                    setAuditTypes((await auditsRes).data.all); // Charge les types d'audit disponibles.
                 }
 
                 if (user.user_type === "auditor") {
                     const res = await axiosInstance.get("/audit/my-audits");
                     const inProgress = res.data.in_progress || [];
-                    setAudits(inProgress);
+                    setAudits(inProgress); // Charge les audits en cours.
                 }
             } catch (e) {
                 console.error(e);
             } finally {
-                setLoading(false);
+                setLoading(false); // Indique que le chargement est terminé.
             }
         };
 
         fetchData();
     }, [user]);
 
+    /**
+     * Filtre les auditeurs en fonction des types d'audit sélectionnés.
+     * Si aucun type n'est sélectionné, retourne tous les auditeurs.
+     */
     const filteredAuditors = selectedTypes.length
         ? auditors.filter((auditor) =>
             selectedTypes.every((type) => auditor.audit_types.includes(type))
         )
         : auditors;
 
+    /**
+     * Crée les options de filtrage par type d'audit.
+     * Associe chaque type d'audit à son label.
+     */
     const auditTypeOptions = Object.fromEntries(
         auditTypes.map((type) => [type, AuditTypeLabels[type as keyof typeof AuditTypeLabels] || type])
     );
 
-    if (loading) return <Loader/>;
+    if (loading) return <Loader/>; // Affiche un loader pendant le chargement.
 
     return (
         <Container size="lg" py="lg">

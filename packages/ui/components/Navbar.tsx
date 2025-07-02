@@ -4,22 +4,34 @@ import axiosInstance from "../utils/axiosInstance";
 import {ActionIcon, Button, Group, Paper, useComputedColorScheme, useMantineColorScheme} from "@mantine/core";
 import {IconMoon, IconSun} from "@tabler/icons-react";
 
+/**
+ * Navbar Component
+ *
+ * This component renders a navigation bar with links to different sections of the application.
+ * It includes buttons for navigation, a logout button, and a toggle for the color scheme.
+ *
+ * @returns {JSX.Element} The rendered navigation bar component.
+ */
 export const Navbar = () => {
-    const {user, setUser} = useUser();
-    const navigate = useNavigate();
-    const location = useLocation();
-    const {setColorScheme} = useMantineColorScheme();
-    const computedColorScheme = useComputedColorScheme('light', {getInitialValueInEffect: true});
+    const {user, setUser} = useUser(); // Retrieves the user context and a function to update the user state.
+    const navigate = useNavigate(); // Hook for programmatic navigation.
+    const location = useLocation(); // Retrieves the current location object from React Router.
+    const {setColorScheme} = useMantineColorScheme(); // Function to update the color scheme.
+    const computedColorScheme = useComputedColorScheme('light', {getInitialValueInEffect: true}); // Detects the current color scheme.
 
+    /**
+     * Handles the logout process.
+     * Sends a logout request to the server, clears the access token, updates the user state, and redirects to the login page.
+     */
     const handleLogout = async () => {
         try {
-            await axiosInstance.post("/auth/logout");
+            await axiosInstance.post("/auth/logout"); // Sends a logout request to the server.
         } catch (err) {
-            console.error("Erreur lors de la déconnexion :", err);
+            console.error("Erreur lors de la déconnexion :", err); // Logs any errors during logout.
         } finally {
-            localStorage.removeItem("access_token");
-            setUser(null);
-            navigate("/login", {replace: true});
+            localStorage.removeItem("access_token"); // Removes the access token from local storage.
+            setUser(null); // Updates the user state to null.
+            navigate("/login", {replace: true}); // Redirects to the login page.
         }
     };
 
@@ -27,6 +39,7 @@ export const Navbar = () => {
         <Paper shadow="sm" px="md" py="sm" radius={0} style={{paddingRight: "0"}}>
             <Group justify="space-between" align="center" style={{justifyContent: "space-between"}}>
                 <Group gap="xs">
+                    {/* Button to navigate to the dashboard */}
                     <Button
                         size="xs"
                         variant={location.pathname === "/dashboard" ? "filled" : "subtle"}
@@ -35,6 +48,7 @@ export const Navbar = () => {
                         Dashboard
                     </Button>
 
+                    {/* Button to navigate to the profile page */}
                     <Button
                         size="xs"
                         variant={location.pathname === "/profile" ? "filled" : "subtle"}
@@ -43,6 +57,7 @@ export const Navbar = () => {
                         Profil
                     </Button>
 
+                    {/* Button to navigate to the chat section */}
                     <Button
                         size="xs"
                         variant={location.pathname.startsWith("/chat") ? "filled" : "subtle"}
@@ -51,6 +66,7 @@ export const Navbar = () => {
                         Chat
                     </Button>
 
+                    {/* Button to navigate to the audits section */}
                     <Button
                         size="xs"
                         variant={location.pathname.startsWith("/audit") ? "filled" : "subtle"}
@@ -59,6 +75,7 @@ export const Navbar = () => {
                         Audits
                     </Button>
 
+                    {/* Button to handle user logout */}
                     <Button size="xs" color="red" onClick={handleLogout}>
                         Déconnexion
                     </Button>
@@ -69,6 +86,7 @@ export const Navbar = () => {
                     size="xl"
                     aria-label="Toggle color scheme"
                 >
+                    {/* Icon to toggle between light and dark color schemes */}
                     {computedColorScheme === 'dark' ? (
                         <IconSun stroke={1.5}/>
                     ) : (

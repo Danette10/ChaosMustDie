@@ -2,6 +2,19 @@ import {ActionIcon, Box, Text, Tooltip} from '@mantine/core';
 import {IconTrash} from '@tabler/icons-react';
 import {Message} from "./messageReducer";
 
+/**
+ * Props du composant MessageItem.
+ *
+ * @typedef {Object} MessageItemProps
+ * @property {Message & {from: 'me' | 'other'}} msg - Le message à afficher, avec une indication de l'expéditeur.
+ * @property {boolean} isHovered - Indique si le message est actuellement survolé.
+ * @property {(id: number) => void} onHover - Fonction appelée lorsque le message est survolé.
+ * @property {() => void} onUnhover - Fonction appelée lorsque le survol du message est terminé.
+ * @property {(id: number) => void} onDeleteClick - Fonction appelée lorsque l'utilisateur clique pour supprimer le message.
+ * @property {(ts: string | number) => string} formatTimestamp - Fonction pour formater l'horodatage du message.
+ * @property {boolean} isDark - Indique si le thème actuel est sombre.
+ * @property {any} theme - Objet représentant le thème actuel.
+ */
 export interface MessageItemProps {
     msg: Message & { from: 'me' | 'other' };
     isHovered: boolean;
@@ -13,6 +26,15 @@ export interface MessageItemProps {
     theme: any;
 }
 
+/**
+ * Composant MessageItem.
+ *
+ * Ce composant représente un élément de message dans une conversation. Il affiche le contenu du message,
+ * son horodatage, et permet de supprimer un message si l'utilisateur est l'expéditeur.
+ *
+ * @param {MessageItemProps} props - Les propriétés du composant MessageItem.
+ * @returns {JSX.Element} Le composant MessageItem.
+ */
 export const MessageItem = ({
                                 msg,
                                 isHovered,

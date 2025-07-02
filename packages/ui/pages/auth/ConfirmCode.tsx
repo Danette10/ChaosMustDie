@@ -6,14 +6,27 @@ import {IconCheck, IconX} from "@tabler/icons-react";
 import {BackButton} from "ui/components/BackButton";
 import axiosInstance from "../../utils/axiosInstance";
 
+/**
+ * Composant ConfirmCode.
+ *
+ * Ce composant permet à l'utilisateur de confirmer son compte en saisissant un code de confirmation.
+ * Il inclut des fonctionnalités pour valider le code, renvoyer un nouveau code, et afficher des messages
+ * de succès ou d'erreur.
+ *
+ * @returns {JSX.Element} Le composant ConfirmCode.
+ */
 export default function ConfirmCode() {
-    const [code, setCode] = useState("");
-    const [success, setSuccess] = useState("");
-    const [error, setError] = useState("");
-    const navigate = useNavigate();
+    const [code, setCode] = useState(""); // État pour stocker le code de confirmation saisi par l'utilisateur.
+    const [success, setSuccess] = useState(""); // État pour afficher un message de succès.
+    const [error, setError] = useState(""); // État pour afficher un message d'erreur.
+    const navigate = useNavigate(); // Hook pour naviguer entre les pages.
 
-    const [submitting, setSubmitting] = useState(false);
+    const [submitting, setSubmitting] = useState(false); // État indiquant si une soumission est en cours.
 
+    /**
+     * Fonction pour valider le code de confirmation.
+     * Envoie une requête à l'API pour confirmer le compte.
+     */
     const handleConfirm = async () => {
         setSubmitting(true);
         try {
@@ -30,7 +43,10 @@ export default function ConfirmCode() {
         }
     };
 
-
+    /**
+     * Fonction pour renvoyer un nouveau code de confirmation.
+     * Envoie une requête à l'API pour renvoyer le code à l'adresse email enregistrée.
+     */
     const handleResend = async () => {
         const email = localStorage.getItem("pending_confirmation_email");
         if (!email) {
@@ -94,7 +110,6 @@ export default function ConfirmCode() {
                     <Button fullWidth onClick={handleConfirm} loading={submitting}>
                         Valider le code
                     </Button>
-
 
                     <Text size="sm" ta="center" mt="xs" mb="md">
                         Vous n'avez pas reçu le code ou il a expiré ?{" "}

@@ -21,25 +21,39 @@ import {auditFieldConfig} from "ui/utils/auditConfig";
 import ConfirmModal from "../../modals/ConfirmModal";
 import {AuditTypeEnum, AuditTypeLabels} from "ui/enum/AuditTypeEnum";
 
+/**
+ * Composant StartAuditPage.
+ *
+ * Ce composant permet à un auditeur de lancer différents types d'audits sur un projet spécifique.
+ * Il inclut la sélection des types d'audit, la configuration des paramètres supplémentaires,
+ * et la gestion de la progression des audits. Un rapport peut être généré et téléchargé après
+ * la fin des audits.
+ *
+ * @returns {JSX.Element} Le composant StartAuditPage.
+ */
 export default function StartAuditPage() {
-    const {auditId} = useParams();
-    const [availableTypes, setAvailableTypes] = useState<AuditTypeEnum[]>([]);
-    const [selectedTypes, setSelectedTypes] = useState<AuditTypeEnum[]>([]);
-    const [uniquePassword, setUniquePassword] = useState("");
-    const [error, setError] = useState("");
-    const [success, setSuccess] = useState("");
-    const {user} = useUser();
-    const [loading, setLoading] = useState(false);
-    const [extraParams, setExtraParams] = useState<Record<string, any>>({});
-    const [auditStatus, setAuditStatus] = useState<Record<string, "pending" | "success" | "error">>({});
-    const [reportUrl, setReportUrl] = useState<string | null>(null);
-    const [confirmOpen, setConfirmOpen] = useState(false);
-    const [hasReport, setHasReport] = useState(false);
+    const {auditId} = useParams(); // Récupère l'ID de l'audit depuis les paramètres de l'URL.
+    const [availableTypes, setAvailableTypes] = useState<AuditTypeEnum[]>([]); // État pour les types d'audit disponibles.
+    const [selectedTypes, setSelectedTypes] = useState<AuditTypeEnum[]>([]); // État pour les types d'audit sélectionnés.
+    const [uniquePassword, setUniquePassword] = useState(""); // État pour le mot de passe unique requis pour les audits.
+    const [error, setError] = useState(""); // État pour afficher les messages d'erreur.
+    const [success, setSuccess] = useState(""); // État pour afficher les messages de succès.
+    const {user} = useUser(); // Récupère les informations de l'utilisateur depuis le contexte.
+    const [loading, setLoading] = useState(false); // État pour indiquer si les audits sont en cours.
+    const [extraParams, setExtraParams] = useState<Record<string, any>>({}); // État pour les paramètres supplémentaires des audits.
+    const [auditStatus, setAuditStatus] = useState<Record<string, "pending" | "success" | "error">>({}); // État pour la progression des audits.
+    const [reportUrl, setReportUrl] = useState<string | null>(null); // URL du rapport généré.
+    const [confirmOpen, setConfirmOpen] = useState(false); // État pour ouvrir ou fermer la modal de confirmation.
+    const [hasReport, setHasReport] = useState(false); // Indique si un rapport existe déjà pour cet audit.
 
+    // Redirige l'utilisateur si son type n'est pas "auditor".
     if (user?.user_type !== "auditor") {
         return <Navigate to="/audit" replace/>;
     }
 
+    /**
+     * Effet pour récupérer les types d'audit disponibles depuis l'API.
+     */
     useEffect(() => {
         const fetchAvailableTypes = async () => {
             try {
@@ -52,6 +66,9 @@ export default function StartAuditPage() {
         fetchAvailableTypes();
     }, [auditId]);
 
+    /**
+     * Effet pour récupérer les informations de l'audit, notamment le rapport existant.
+     */
     useEffect(() => {
         const fetchAudit = async () => {
             try {
@@ -70,6 +87,9 @@ export default function StartAuditPage() {
         fetchAudit();
     }, [auditId]);
 
+    /**
+     * Effet pour configurer les paramètres supplémentaires des audits sélectionnés.
+     */
     useEffect(() => {
         setExtraParams((prevParams) => {
             const updatedParams = {...prevParams};
@@ -88,6 +108,10 @@ export default function StartAuditPage() {
         });
     }, [selectedTypes]);
 
+    /**
+     * Fonction pour démarrer les audits sélectionnés.
+     * Envoie les requêtes à l'API pour chaque type d'audit et génère un rapport.
+     */
     const startAudit = async () => {
         const routeMap: Record<string, string> = {
             sqli: "/sqli/scan",
@@ -115,6 +139,7 @@ export default function StartAuditPage() {
         const isBothXssSqli = selectedTypes.includes(AuditTypeEnum.XSS) && selectedTypes.includes(AuditTypeEnum.SQLI);
 
         try {
+            // Gestion des audits combinés XSS et SQLi.
             if (isBothXssSqli) {
                 const url = routeMap["sqli"];
                 const payload = {
@@ -137,6 +162,7 @@ export default function StartAuditPage() {
                 handled.add("sqli");
             }
 
+            // Gestion des autres types d'audit.
             for (const type of orderedTypes) {
                 if (handled.has(type)) continue;
 
@@ -153,6 +179,7 @@ export default function StartAuditPage() {
                 handled.add(type);
             }
 
+            // Génération du rapport après les audits.
             await axiosInstance.post("/reports/generate", {
                 audit_id: auditId,
                 results

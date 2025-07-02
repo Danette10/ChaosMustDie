@@ -17,16 +17,28 @@ import axiosInstance from "../../utils/axiosInstance";
 import {useSocket} from "ui/hooks/useSocket";
 import {motion} from "framer-motion";
 
+/**
+ * Composant ChatListPage.
+ *
+ * Ce composant représente la page affichant la liste des conversations de l'utilisateur.
+ * Il récupère les conversations via une requête API, gère les événements en temps réel via un socket,
+ * et permet de naviguer vers une conversation spécifique.
+ *
+ * @returns {JSX.Element} Le composant ChatListPage.
+ */
 export default function ChatListPage() {
-    const [conversations, setConversations] = useState<any[]>([]);
-    const [loading, setLoading] = useState(true);
-    const [typingMap, setTypingMap] = useState<Record<string, boolean>>({});
-    const navigate = useNavigate();
-    const theme = useMantineTheme();
-    const colorScheme = useComputedColorScheme();
-    const isDark = colorScheme === "dark";
-    const socketRef = useSocket();
+    const [conversations, setConversations] = useState<any[]>([]); // État contenant la liste des conversations.
+    const [loading, setLoading] = useState(true); // État indiquant si les données sont en cours de chargement.
+    const [typingMap, setTypingMap] = useState<Record<string, boolean>>({}); // État indiquant les conversations où un utilisateur écrit.
+    const navigate = useNavigate(); // Hook pour naviguer entre les pages.
+    const theme = useMantineTheme(); // Thème Mantine utilisé pour les styles.
+    const colorScheme = useComputedColorScheme(); // Détermine le mode clair ou sombre.
+    const isDark = colorScheme === "dark"; // Indique si le thème actuel est sombre.
+    const socketRef = useSocket(); // Référence au socket pour gérer les événements en temps réel.
 
+    /**
+     * Effet pour récupérer les conversations et rejoindre les conversations via le socket.
+     */
     useEffect(() => {
         const fetchConversations = async () => {
             try {
@@ -47,6 +59,11 @@ export default function ChatListPage() {
         fetchConversations();
     }, [socketRef]);
 
+    /**
+     * Effet pour gérer les événements en temps réel via le socket.
+     * Les événements incluent la saisie, l'arrêt de la saisie, les nouveaux messages,
+     * les messages supprimés et les messages lus.
+     */
     useEffect(() => {
         if (!socketRef.current) return;
 
@@ -117,6 +134,12 @@ export default function ChatListPage() {
         };
     }, [socketRef]);
 
+    /**
+     * Fonction pour formater un horodatage en une chaîne lisible.
+     *
+     * @param {string} timestamp - L'horodatage à formater.
+     * @returns {string} Le texte formaté représentant la date et l'heure.
+     */
     const formatTimestamp = (timestamp: string) => {
         const date = new Date(timestamp);
         return `le ${date.toLocaleDateString("fr-FR")} à ${date.toLocaleTimeString("fr-FR")}`;

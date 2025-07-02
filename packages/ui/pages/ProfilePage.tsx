@@ -7,20 +7,33 @@ import {Loader} from "../components/Loader";
 import {UserTypeLabel} from "../enum/UserTypeEnum";
 import {AuditTypeEnum, AuditTypeLabels} from "../enum/AuditTypeEnum";
 
+/**
+ * Composant ProfilePage.
+ *
+ * Ce composant affiche les informations du profil utilisateur, permet de modifier les préférences
+ * de types d'audit et de changer le mot de passe. Il gère également les erreurs et les succès
+ * lors des actions effectuées.
+ *
+ * @returns {JSX.Element} Le composant ProfilePage.
+ */
 export default function ProfilePage() {
-    const {user} = useUser();
-    const [allAudits, setAllAudits] = useState<string[]>([]);
-    const [selectedAudits, setSelectedAudits] = useState<string[]>([]);
-    const [success, setSuccess] = useState("");
-    const [error, setError] = useState("");
-    const [showAlert, setShowAlert] = useState(true);
-    const [loading, setLoading] = useState(true);
+    const {user} = useUser(); // Récupère les informations de l'utilisateur depuis le contexte.
+    const [allAudits, setAllAudits] = useState<string[]>([]); // État contenant tous les types d'audit disponibles.
+    const [selectedAudits, setSelectedAudits] = useState<string[]>([]); // État des types d'audit sélectionnés par l'utilisateur.
+    const [success, setSuccess] = useState(""); // État du message de succès.
+    const [error, setError] = useState(""); // État du message d'erreur.
+    const [showAlert, setShowAlert] = useState(true); // État indiquant si les alertes doivent être affichées.
+    const [loading, setLoading] = useState(true); // État indiquant si les données sont en cours de chargement.
 
-    const [changePasswordModalOpen, setChangePasswordModalOpen] = useState(false);
-    const [oldPassword, setOldPassword] = useState("");
-    const [newPassword, setNewPassword] = useState("");
-    const [changePasswordError, setChangePasswordError] = useState("");
+    const [changePasswordModalOpen, setChangePasswordModalOpen] = useState(false); // État indiquant si la modal de changement de mot de passe est ouverte.
+    const [oldPassword, setOldPassword] = useState(""); // État de l'ancien mot de passe saisi.
+    const [newPassword, setNewPassword] = useState(""); // État du nouveau mot de passe saisi.
+    const [changePasswordError, setChangePasswordError] = useState(""); // État du message d'erreur lors du changement de mot de passe.
 
+    /**
+     * Effet pour charger les types d'audit disponibles et sélectionnés.
+     * Ce hook s'exécute au montage du composant.
+     */
     useEffect(() => {
         const fetchAudits = async () => {
             try {
@@ -39,6 +52,11 @@ export default function ProfilePage() {
         fetchAudits();
     }, []);
 
+    /**
+     * Fonction pour basculer la sélection d'un type d'audit.
+     *
+     * @param {string} auditType - Le type d'audit à basculer.
+     */
     const handleToggle = (auditType: string) => {
         setSelectedAudits((prev) =>
             prev.includes(auditType)
@@ -47,6 +65,9 @@ export default function ProfilePage() {
         );
     };
 
+    /**
+     * Fonction pour enregistrer les préférences de types d'audit.
+     */
     const handleSave = async () => {
         try {
             await axiosInstance.post("/profile/audits", {selected: selectedAudits});
@@ -61,6 +82,9 @@ export default function ProfilePage() {
         }
     };
 
+    /**
+     * Fonction pour changer le mot de passe de l'utilisateur.
+     */
     const handleChangePassword = async () => {
         try {
             await axiosInstance.post("/auth/change-password", {
@@ -83,6 +107,9 @@ export default function ProfilePage() {
         }
     };
 
+    /**
+     * Effet pour afficher les alertes de succès ou d'erreur pendant 5 secondes.
+     */
     useEffect(() => {
         if (success || error) {
             setShowAlert(true);
@@ -91,7 +118,7 @@ export default function ProfilePage() {
         }
     }, [success, error]);
 
-    if (loading) return <Loader/>;
+    if (loading) return <Loader/>; // Affiche un loader pendant le chargement.
 
     return (
         <Container size="sm" p="md">
