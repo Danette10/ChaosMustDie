@@ -30,7 +30,7 @@ export default function DashboardPage() {
     const [loading, setLoading] = useState(true); // État indiquant si les données sont en cours de chargement.
     const [modalOpen, setModalOpen] = useState(false); // État indiquant si la modal de contact est ouverte.
     const [selectedAuditor, setSelectedAuditor] = useState<any>(null); // État contenant l'auditeur sélectionné pour la modal.
-    const [audits, setAudits] = useState<any[]>([]); // État contenant la liste des audits en cours.
+    const [, setAudits] = useState<any[]>([]); // État contenant la liste des audits en cours.
 
     /**
      * Effet pour charger les données des auditeurs et des audits en fonction du type d'utilisateur.

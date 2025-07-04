@@ -10,7 +10,8 @@
     "preview": "vite preview"
   },
   "devDependencies": {
-    "@types/axios": "^0.14.4"
+    "@types/axios": "^0.14.4",
+    "typescript": "^5.8.3"
   },
   "dependencies": {
     "@mantine/core": "^8.1.2",

@@ -20,7 +20,7 @@ export default function AllAuditorsPage() {
     const {user} = useUser(); // Récupère les informations de l'utilisateur depuis le contexte.
     const [auditors, setAuditors] = useState<any[]>([]); // État contenant la liste des auditeurs.
     const [selectedTypes, setSelectedTypes] = useState<string[]>([]); // État des types d'audit sélectionnés pour le filtrage.
-    const [auditTypes, setAuditTypes] = useState<string[]>([]); // État contenant tous les types d'audit disponibles.
+    const [, setAuditTypes] = useState<string[]>([]); // État contenant tous les types d'audit disponibles.
     const [currentPage, setCurrentPage] = useState(1); // État de la page actuelle pour la pagination.
     const [loading, setLoading] = useState(true); // État indiquant si les données sont en cours de chargement.
     const [modalOpen, setModalOpen] = useState(false); // État indiquant si la modal de contact est ouverte.

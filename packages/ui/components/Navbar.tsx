@@ -13,7 +13,7 @@ import {IconMoon, IconSun} from "@tabler/icons-react";
  * @returns {JSX.Element} The rendered navigation bar component.
  */
 export const Navbar = () => {
-    const {user, setUser} = useUser(); // Retrieves the user context and a function to update the user state.
+    const {setUser} = useUser(); // Retrieves the user context and a function to update the user state.
     const navigate = useNavigate(); // Hook for programmatic navigation.
     const location = useLocation(); // Retrieves the current location object from React Router.
     const {setColorScheme} = useMantineColorScheme(); // Function to update the color scheme.
