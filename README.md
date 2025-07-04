@@ -10,6 +10,7 @@
     - [Generate Local Certificates (HTTPS)](#generate-local-certificates-https)
     - [Run Frontend](#run-frontend)
     - [Build extension](#build-extension)
+  - [Building web application for production](#building-web-application-for-production)
 
 ## Introduction
 
@@ -79,3 +80,19 @@ This will create a production-ready build of the frontend in the `dist` director
 
 Now everything (API and frontend) works fully with HTTPS and WebSocket compatibility in local development.
 
+### Building Web Application for Production
+
+To build the web application for production, run:
+
+```bash
+cd apps/web
+pnpm run build
+```
+
+This will create a production-ready build of the web application in the `dist` directory.
+The production build will be optimized for performance and can be deployed to a web server.
+To run the production build locally, you can use a simple HTTPS server:
+
+```bash
+pnpm run preview
+```
