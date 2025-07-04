@@ -299,10 +299,16 @@ export default function StartAuditPage() {
                                                     reader.readAsText(file);
                                                 }}
                                             />
-                                            {Array.isArray(extraParams[type]?.[field.key]) && (
+                                            {Array.isArray(extraParams[type]?.[field.key]) ? (
                                                 <Text size="xs" mt={4} c="dimmed">
                                                     {extraParams[type][field.key].length} lignes chargées
                                                 </Text>
+                                            ) : (
+                                                field.defaultName && (
+                                                    <Text size="xs" mt={4} c="dimmed">
+                                                        Fichier par défaut : <strong>{field.defaultName}</strong>
+                                                    </Text>
+                                                )
                                             )}
                                         </>
                                     ) : (

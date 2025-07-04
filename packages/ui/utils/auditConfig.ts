@@ -11,7 +11,13 @@
  *
  * @type {Record<string, {label: string, key: string, type: string, default?: any}[]>}
  */
-export const auditFieldConfig: Record<string, { label: string; key: string; type: string; default?: any }[]> = {
+export const auditFieldConfig: Record<string, {
+    label: string;
+    key: string;
+    type: string;
+    default?: any,
+    defaultName?: any
+}[]> = {
     /**
      * Configuration des champs pour les audits de type DDoS.
      */
@@ -48,7 +54,7 @@ export const auditFieldConfig: Record<string, { label: string; key: string; type
         {label: "Nom du champ mot de passe", key: "password_field", type: "text", default: "password"},
         {label: "Nom d’utilisateur (optionnel)", key: "username", type: "text", default: "test@gmail.com"},
         {label: "Wordlist de noms d’utilisateur", key: "username_wordlist", type: "file"},
-        {label: "Wordlist de mots de passe", key: "password_wordlist", type: "file"},
+        {label: "Wordlist de mots de passe", key: "password_wordlist", type: "file", defaultName: "rockyou-50.txt"},
         {label: "Nombre de threads", key: "threads", type: "number", default: 10}
     ],
 
@@ -56,7 +62,7 @@ export const auditFieldConfig: Record<string, { label: string; key: string; type
      * Configuration des champs pour les audits de type endpoint discovery.
      */
     endpoint_discovery: [
-        {label: "Wordlist de chemins", key: "wordlist", type: "file"},
+        {label: "Wordlist de chemins", key: "wordlist", type: "file", defaultName: "common.txt"},
         {label: "Nombre de threads", key: "workers", type: "number", default: 5000000}
     ],
 
