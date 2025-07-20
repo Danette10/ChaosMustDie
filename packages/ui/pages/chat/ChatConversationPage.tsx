@@ -520,7 +520,7 @@ export default function ChatConversationPage() {
                                         <Badge color="yellow">Demande envoyée</Badge>
                                     )}
 
-                                    {(audit?.status === "completed" || audit?.status === "failed" || audit?.status === "refused") && (
+                                    {(!audit || audit?.status === "completed" || audit?.status === "failed" || audit?.status === "refused") && (
                                         <Button size="xs" variant="light" onClick={handleRequestAudit}>
                                             Demander un audit
                                         </Button>
