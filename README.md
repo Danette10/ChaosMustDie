@@ -1,6 +1,6 @@
 # Chaos-must-Die
 
-[ChaosMustDie API]([https://github.com/DorianLC](https://github.com/Danette10/Chaos-must-Die-API))
+[ChaosMustDie_API]([https://github.com/DorianLC](https://github.com/Danette10/Chaos-must-Die-API))
 
 ## Frontend Documentation
 
